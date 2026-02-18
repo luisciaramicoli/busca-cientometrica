@@ -1,6 +1,7 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://api-cientometria.vercel.app/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -9,7 +10,7 @@ const api = axios.create({
 // Interceptor para adicionar o token JWT a todas as requisições
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -17,46 +18,48 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 export const login = async (username, password) => {
-  const response = await api.post('/login', { username, password });
+  const response = await api.post("/login", { username, password });
   return response.data;
 };
 
 export const searchArticles = async (searchParams) => {
-  const response = await api.post('/search', searchParams);
+  const response = await api.post("/search", searchParams);
   return response.data;
 };
 
 export const saveArticles = async (selectedRows) => {
-  const response = await api.post('/save', { selected_rows: selectedRows });
+  const response = await api.post("/save", { selected_rows: selectedRows });
   return response.data;
 };
 
 export const getCuratedArticles = async () => {
-  const response = await api.get('/curation');
+  const response = await api.get("/curation");
   return response.data;
 };
 
 export const triggerBatchCuration = async () => {
-  const response = await api.post('/trigger-curation');
+  const response = await api.post("/trigger-curation");
   return response.data;
 };
 
 export const triggerSingleCuration = async (rowNumber) => {
-  const response = await api.post('/trigger-curation-single', { row_number: rowNumber });
+  const response = await api.post("/trigger-curation-single", {
+    row_number: rowNumber,
+  });
   return response.data;
 };
 
 export const deleteArticleRow = async (rowNumber) => {
-  const response = await api.post('/delete-row', { row_number: rowNumber });
+  const response = await api.post("/delete-row", { row_number: rowNumber });
   return response.data;
 };
 
 export const deleteUnavailableArticles = async () => {
-  const response = await api.post('/delete-unavailable');
+  const response = await api.post("/delete-unavailable");
   return response.data;
 };
 
@@ -65,39 +68,49 @@ export const manualInsertArticle = async (dataToSave, file) => {
   if (file) {
     const form = new FormData();
     Object.keys(dataToSave).forEach((k) => form.append(k, dataToSave[k] || ""));
-    form.append('file', file, file.name);
-    response = await api.post('/manual-insert', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    form.append("file", file, file.name);
+    response = await api.post("/manual-insert", form, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
   } else {
-    response = await api.post('/manual-insert', dataToSave);
+    response = await api.post("/manual-insert", dataToSave);
   }
   return response.data;
 };
 
 export const manualApproveArticle = async (rowNumber, fileId) => {
-  const response = await api.post('/manual-approval', { row_number: rowNumber, fileId: fileId });
+  const response = await api.post("/manual-approval", {
+    row_number: rowNumber,
+    fileId: fileId,
+  });
   return response.data;
 };
 
 export const extractMetadata = async (extractionData) => {
-  const response = await api.post('/extract-metadata', extractionData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  const response = await api.post("/extract-metadata", extractionData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
 };
 
 export const registerUser = async (username, email, password, role) => {
-  const response = await api.post('/register', { username, email, password, role });
+  const response = await api.post("/register", {
+    username,
+    email,
+    password,
+    role,
+  });
   return response.data;
 };
 
 export const processDriveFolder = async (folderId) => {
-  const response = await api.post('/batch-process-drive-folder', { folder_id: folderId });
+  const response = await api.post("/batch-process-drive-folder", {
+    folder_id: folderId,
+  });
   return response.data;
 };
 
 export const checkApiHealth = async () => {
-  const response = await api.get('/health');
+  const response = await api.get("/health");
   return response.data;
 };
