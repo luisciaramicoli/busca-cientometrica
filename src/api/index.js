@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://api-cientometria.vercel.app/api";
+  import.meta.env.VITE_API_BASE_URL || "https://api-cientometria.vercel.app/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -10,7 +10,7 @@ const api = axios.create({
 // Interceptor para adicionar o token JWT a todas as requisições
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken") || import.meta.env.VITE_JWT_TOKEN;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

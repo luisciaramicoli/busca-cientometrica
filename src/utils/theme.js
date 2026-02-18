@@ -34,15 +34,15 @@ const theme = createTheme({
         },
         h4: {
             fontFamily: '"Roboto Slab", serif',
-            fontWeight: 600,
+            fontWeight: 700,
         },
         h5: {
             fontFamily: '"Roboto Slab", serif',
-            fontWeight: 600,
+            fontWeight: 700,
         },
         h6: {
             fontFamily: '"Roboto Slab", serif',
-            fontWeight: 600,
+            fontWeight: 700,
         }
     },
     components: {
