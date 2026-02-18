@@ -134,7 +134,7 @@ const UserRegistrationPage = () => {
             >
               <MenuItem value="cientometria">Cientometria</MenuItem>
               <MenuItem value="curadoria_boaretto">Curadoria Boaretto</MenuItem>
-              <MenuItem value="curadoria_lucas">Curadoria Lucas</MenuItem>
+              <MenuItem value="curadoria_bonetti">Curadoria Bonetti</MenuItem>
               <MenuItem value="admin">Admin</MenuItem>
             </Select>
           </FormControl>

@@ -481,8 +481,8 @@ function CurationPage() {
         let matchesRole = true;
         const categoriaValue = (article["CATEGORIA"] || "").toUpperCase(); // Assuming 'CATEGORIA' is the header for column AJ
 
-        if (userRole === "curadoria_lucas") {
-          matchesRole = categoriaValue === "BIOINSSUMOS";
+        if (userRole === "curadoria_bonetti") {
+          matchesRole = categoriaValue === "BONETTI";
         } else if (userRole === "curadoria_boaretto") {
           matchesRole = categoriaValue === "BOARETTO";
         }
