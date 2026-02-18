@@ -1,48 +1,84 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode'; // Import jwtDecode
+import { jwtDecode } from 'jwt-decode';
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-    const [userToken, setUserToken] = useState(localStorage.getItem('accessToken'));
-    const [userRole, setUserRole] = useState(null); // Add state for user role
+    const [userToken, setUserToken] = useState(() => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (token === 'undefined' || token === 'null' || !token) return null;
+            return token;
+        } catch (e) {
+            return null;
+        }
+    });
 
-    useEffect(() => {
-        if (userToken) {
-            localStorage.setItem('accessToken', userToken);
-            // Decode token and set user role
+    const [userRole, setUserRole] = useState(() => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (token && token !== 'undefined' && token !== 'null') {
+                const decodedToken = jwtDecode(token);
+                // Verifica expiração básica (opcional mas recomendado)
+                if (decodedToken.exp && decodedToken.exp * 1000 < Date.now()) {
+                    localStorage.removeItem('accessToken');
+                    return null;
+                }
+                return decodedToken.role;
+            }
+        } catch (error) {
+            return null;
+        }
+        return null;
+    });
+
+    const [isLoading, setIsLoading] = useState(true);
+
+    const login = useCallback((token) => {
+        if (token) {
+            localStorage.setItem('accessToken', token);
+            setUserToken(token);
             try {
-                const decodedToken = jwtDecode(userToken);
+                const decodedToken = jwtDecode(token);
                 setUserRole(decodedToken.role);
             } catch (error) {
-                console.error("Failed to decode token:", error);
-                setUserToken(null); // Clear invalid token
+                console.error("Error decoding token on login:", error);
                 setUserRole(null);
             }
+        }
+    }, []);
+
+    const logout = useCallback(() => {
+        localStorage.removeItem('accessToken');
+        setUserToken(null);
+        setUserRole(null);
+    }, []);
+
+    // Sincroniza axios sempre que o token mudar
+    useEffect(() => {
+        if (userToken) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
         } else {
-            localStorage.removeItem('accessToken');
             delete axios.defaults.headers.common['Authorization'];
-            setUserRole(null); // Clear role on logout
         }
+        // Marcar como carregado após a primeira inicialização
+        setIsLoading(false);
     }, [userToken]);
 
-    const login = (token) => {
-        setUserToken(token);
-    };
-
-    const logout = () => {
-        setUserToken(null);
-    };
-
-    const authValue = {
+    const authValue = useMemo(() => ({
         isAuthenticated: !!userToken,
         token: userToken,
-        userRole, // Expose userRole
+        userRole,
+        isLoading,
         login,
         logout,
-    };
+    }), [userToken, userRole, isLoading, login, logout]);
+
+    if (isLoading) {
+        // Opcional: retornar um spinner ou nada para evitar flash de conteúdo deslogado
+        return null; 
+    }
 
     return (
         <AuthContext.Provider value={authValue}>

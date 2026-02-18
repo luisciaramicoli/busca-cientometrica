@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { 
   Box, 
@@ -22,6 +22,14 @@ import { login } from "../api";
 function LoginPage() {
   const navigate = useNavigate();
   const auth = useAuth();
+  const { isAuthenticated } = auth;
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/home");
+    }
+  }, [isAuthenticated, navigate]);
+
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState("");
