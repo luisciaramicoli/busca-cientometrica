@@ -66,6 +66,13 @@ function SearchPage() {
         </Box>
         <SearchForm onSearch={handleSearch} loading={searchLoading} />
         {results.length > 0 && (
+          <Box mt={2} mb={2}>
+            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+              {results.length} resultado{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}.
+            </Typography>
+          </Box>
+        )}
+        {results.length > 0 && (
           <Box mt={4}>
             <ResultsTable results={results} onSave={handleSave} loading={saveLoading} />
           </Box>

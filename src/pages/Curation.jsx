@@ -37,6 +37,7 @@ import {
   ListItem,
   ListItemText,
   Stack,
+  Tooltip,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -53,8 +54,9 @@ import BlockIcon from "@mui/icons-material/Block";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import CategoryIcon from "@mui/icons-material/Category";
 import "./Curation.css";
-import { getCuratedArticles, triggerBatchCuration, triggerSingleCuration, deleteArticleRow, deleteUnavailableArticles, manualApproveArticle } from '../api';
+import { getCuratedArticles, triggerBatchCuration, triggerSingleCuration, categorizeArticleRow, deleteArticleRow, deleteUnavailableArticles, manualApproveArticle } from '../api';
 import { useAuth } from '../hooks/useAuth'; // Import useAuth hook
 
 function CurationPage() {
@@ -75,8 +77,10 @@ function CurationPage() {
 
   const [allHeaders, setAllHeaders] = useState([]);
   const [visibleHeaders, setVisibleHeaders] = useState([]);
+  const [uniqueCategories, setUniqueCategories] = useState([]);
 
   const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [order, setOrder] = useState("asc");
@@ -110,6 +114,10 @@ function CurationPage() {
         const newHeaders = ["Status", ...filteredHeaders];
         setAllHeaders(newHeaders);
         setVisibleHeaders(newHeaders);
+
+        // Extract unique categories
+        const categories = [...new Set(data.map(article => article["CATEGORIA"]).filter(cat => cat))];
+        setUniqueCategories(categories);
       }
     } catch (err) {
       console.error("Failed to fetch curated articles:", err);
@@ -192,6 +200,46 @@ function CurationPage() {
       const errorMessage =
         err.response?.data?.error ||
         `Falha ao analisar a linha ${__row_number}.`;
+      setSnackbar({ open: true, message: errorMessage, severity: "error" });
+    } finally {
+      setProcessingRow(null);
+    }
+  };
+
+  const handleSingleCategorize = async (articleToProcess) => {
+    const { __row_number } = articleToProcess;
+    if (!__row_number) {
+      setSnackbar({
+        open: true,
+        message:
+          "Erro: Não foi possível determinar o número da linha para este artigo.",
+        severity: "error",
+      });
+      return;
+    }
+
+    setProcessingRow(__row_number); // Rastreia pelo número da linha
+    setSnackbar({
+      open: true,
+      message: `Categorizando linha ${__row_number}...`,
+      severity: "info",
+    });
+
+    try {
+      const response = await categorizeArticleRow(__row_number);
+
+      // SUCESSO: Guarda o resultado e abre o modal, NÃO atualiza a lista ainda
+      setAnalysisResult(response.updatedArticle);
+      setOpenAnalysisDialog(true);
+      setSnackbar({ open: false, message: "", severity: "info" }); // Limpa snackbar para focar no modal
+    } catch (err) {
+      console.error(
+        `Failed to categorize row ${__row_number}:`,
+        err,
+      );
+      const errorMessage =
+        err.response?.data?.error ||
+        `Falha ao categorizar a linha ${__row_number}.`;
       setSnackbar({ open: true, message: errorMessage, severity: "error" });
     } finally {
       setProcessingRow(null);
@@ -402,7 +450,7 @@ function CurationPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [searchQuery, statusFilter, highlightedArticleId]);
+  }, [searchQuery, statusFilter, categoryFilter, highlightedArticleId]);
 
   const { userRole } = useAuth(); // Get user role from AuthContext
 
@@ -427,6 +475,8 @@ function CurationPage() {
         const matchesSearch =
           query === "" || title.includes(query) || author.includes(query);
 
+        const matchesCategory = categoryFilter === "all" || article["CATEGORIA"] === categoryFilter;
+
         // --- Role-based filtering ---
         let matchesRole = true;
         const categoriaValue = (article["CATEGORIA"] || "").toUpperCase(); // Assuming 'CATEGORIA' is the header for column AJ
@@ -438,7 +488,7 @@ function CurationPage() {
         }
         // For 'cientometria' and 'admin', matchesRole remains true, showing all.
 
-        return matchesStatus && matchesSearch && matchesRole;
+        return matchesStatus && matchesSearch && matchesCategory && matchesRole;
       });
     }
 
@@ -472,44 +522,45 @@ function CurationPage() {
   );
 
   return (
-    <Box className="page-container">
+    <Box className="curation-container">
       <Header />
       <Container component="main" className="main-content" maxWidth="xl">
-        <Box sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton component={RouterLink} to="/" sx={{ mr: 1, color: "inherit" }}>
+        <Box className="curation-header">
+          <Box className="curation-header-title">
+            <IconButton component={RouterLink} to="/" sx={{ mr: 1, color: "inherit" }} className="curation-back-button">
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
               Artigos em Curadoria
             </Typography>
           </Box>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} className="curation-actions-stack">
             <Button
               variant="contained"
-              fullWidth
+              size="large"
               startIcon={<PlayCircleOutlineIcon />}
               onClick={handleTriggerCuration}
               disabled={isTriggering || processingRow}
+              className="curation-action-button curation-action-primary"
             >
               {isTriggering
                 ? "Processando Lote..."
                 : "Analisar Pendentes"}
             </Button>
             <Button
-              variant="outlined"
-              color="error"
-              fullWidth
+              variant="contained"
+              size="large"
               startIcon={<DeleteIcon />}
               onClick={handleDeleteUnavailable}
               disabled={isTriggering || processingRow}
+              className="curation-action-button curation-action-danger"
             >
               Excluir Indisponíveis
             </Button>
           </Stack>
         </Box>
 
-        <Paper elevation={1} sx={{ p: 2, mb: 4 }}>
+        <Paper elevation={1} sx={{ p: 2, mb: 4 }} className="curation-filters">
           {highlightedArticleId ? (
             <Alert
               severity="info"
@@ -527,109 +578,195 @@ function CurationPage() {
               Exibindo apenas o artigo recém-analisado.
             </Alert>
           ) : (
-            <Grid
-              container
-              spacing={2}
-              justifyContent="space-between"
-              alignItems="center"
-            >
-              <Grid item xs={12} md="auto">
-                <Typography
-                  variant="subtitle2"
-                  sx={{ mb: 1, fontWeight: "bold", color: "text.secondary" }}
-                >
-                  Filtrar por Status
-                </Typography>
-                <ToggleButtonGroup
-                  color="primary"
-                  value={statusFilter}
-                  exclusive
-                  onChange={(e, newFilter) =>
-                    newFilter && setStatusFilter(newFilter)
-                  }
-                  aria-label="filtro de status"
-                  size="small"
-                >
-                  <ToggleButton value="all">Todos</ToggleButton>
-                  <ToggleButton
-                    value="manual_approved"
-                    sx={{ color: "primary.dark" }}
-                  >
-                    Aprovados Manualmente
-                  </ToggleButton>
-                  <ToggleButton
-                    value="approved_ai"
-                    sx={{ color: "success.dark" }}
-                  >
-                    Aprovados (IA)
-                  </ToggleButton>
-                  <ToggleButton value="pending" sx={{ color: "warning.dark" }}>
-                    Pendentes
-                  </ToggleButton>
-                  <ToggleButton
-                    value="rejected_ai"
-                    sx={{ color: "error.dark" }}
-                  >
-                    Rejeitados
-                  </ToggleButton>
-                  <ToggleButton
-                    value="unavailable"
-                    sx={{ color: "secondary.dark" }}
-                  >
-                    Indisponíveis
-                  </ToggleButton>
-                </ToggleButtonGroup>
+            <>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }} className="curation-summary-title">
+                Resumo da Curadoria
+              </Typography>
+              <Grid container spacing={2} sx={{ mb: 2 }} className="curation-summary">
+                <Grid item xs={6} sm={3} className="summary-item">
+                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'primary.light', borderRadius: 2 }}>
+                    <Typography variant="h4" sx={{ color: 'primary.contrastText', fontWeight: 'bold' }}>
+                      {articles.filter(a => {
+                        const status = getStatusInfo(a).status;
+                        return status === 'manual_approved' || status === 'approved_ai';
+                      }).length}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'primary.contrastText' }}>
+                      Aprovados
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6} sm={3} className="summary-item">
+                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'warning.light', borderRadius: 2 }}>
+                    <Typography variant="h4" sx={{ color: 'warning.contrastText', fontWeight: 'bold' }}>
+                      {articles.filter(a => getStatusInfo(a).status === 'pending').length}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'warning.contrastText' }}>
+                      Pendentes
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6} sm={3} className="summary-item">
+                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'error.light', borderRadius: 2 }}>
+                    <Typography variant="h4" sx={{ color: 'error.contrastText', fontWeight: 'bold' }}>
+                      {articles.filter(a => getStatusInfo(a).status === 'rejected_ai').length}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'error.contrastText' }}>
+                      Rejeitados
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6} sm={3} className="summary-item">
+                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'grey.300', borderRadius: 2 }}>
+                    <Typography variant="h4" sx={{ color: 'grey.800', fontWeight: 'bold' }}>
+                      {articles.filter(a => getStatusInfo(a).status === 'unavailable').length}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'grey.800' }}>
+                      Indisponíveis
+                    </Typography>
+                  </Box>
+                </Grid>
               </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="Buscar por Título ou Autor"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid item xs={6} md={2}>
-                <FormControl fullWidth size="small">
-                  <InputLabel id="curation-order-label">Ordem</InputLabel>
-                  <Select
-                    labelId="curation-order-label"
-                    value={order}
-                    label="Ordem"
-                    onChange={(e) => setOrder(e.target.value)}
+              <Divider sx={{ my: 2 }} />
+              <Grid
+                container
+                spacing={2}
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Grid item xs={12} className="filter-group">
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ mb: 1, fontWeight: "bold", color: "text.secondary" }}
                   >
-                    <MenuItem value="asc">Crescente</MenuItem>
-                    <MenuItem value="desc">Decrescente</MenuItem>
-                  </Select>
-                </FormControl>
+                    Filtrar por Status
+                  </Typography>
+                  <ToggleButtonGroup
+                    color="primary"
+                    value={statusFilter}
+                    exclusive
+                    onChange={(e, newFilter) =>
+                      newFilter && setStatusFilter(newFilter)
+                    }
+                    aria-label="filtro de status"
+                    size="small"
+                  >
+                    <ToggleButton value="all">Todos</ToggleButton>
+                    <ToggleButton
+                      value="manual_approved"
+                      sx={{ color: "primary.dark" }}
+                    >
+                      Aprovados Manualmente
+                    </ToggleButton>
+                    <ToggleButton
+                      value="approved_ai"
+                      sx={{ color: "success.dark" }}
+                    >
+                      Aprovados (IA)
+                    </ToggleButton>
+                    <ToggleButton value="pending" sx={{ color: "warning.dark" }}>
+                      Pendentes
+                    </ToggleButton>
+                    <ToggleButton
+                      value="rejected_ai"
+                      sx={{ color: "error.dark" }}
+                    >
+                      Rejeitados
+                    </ToggleButton>
+                    <ToggleButton
+                      value="unavailable"
+                      sx={{ color: "secondary.dark" }}
+                    >
+                      Indisponíveis
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Grid>
               </Grid>
-            </Grid>
+              <Grid container spacing={2} sx={{ mt: 1 }} className="filter-row">
+                <Grid item xs={12} md={4} className="filter-group">
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ mb: 1, fontWeight: "bold", color: "text.secondary" }}
+                  >
+                    Filtrar por Categoria
+                  </Typography>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="category-filter-label">Categoria</InputLabel>
+                    <Select
+                      labelId="category-filter-label"
+                      value={categoryFilter}
+                      label="Categoria"
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                    >
+                      <MenuItem value="all">Todas</MenuItem>
+                      {uniqueCategories.map((cat) => (
+                        <MenuItem key={cat} value={cat}>
+                          {cat}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={5} className="filter-group">
+                  <TextField
+                    label="Buscar por Título ou Autor"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3} className="filter-group">
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ mb: 1, fontWeight: "bold", color: "text.secondary" }}
+                  >
+                    Ordem
+                  </Typography>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="curation-order-label">Ordem</InputLabel>
+                    <Select
+                      labelId="curation-order-label"
+                      value={order}
+                      label="Ordem"
+                      onChange={(e) => setOrder(e.target.value)}
+                    >
+                      <MenuItem value="asc">Crescente</MenuItem>
+                      <MenuItem value="desc">Decrescente</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            </>
           )}
         </Paper>
 
         {loading && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }} className="curation-loading">
             <CircularProgress />
+            <Typography variant="body1" sx={{ ml: 2 }}>
+              Carregando artigos...
+            </Typography>
           </Box>
         )}
 
         {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mt: 2 }} className="curation-error">
             {error}
           </Alert>
         )}
 
         {!loading && !error && (
           <Box sx={{ mt: 2 }}>
-            <Grid container spacing={3}>
+            <Grid container spacing={3} className="curation-card-grid">
               {paginatedArticles.map((article, index) => {
                 const statusInfo = getStatusInfo(article);
                 const isProcessingThisRow =
@@ -651,7 +788,13 @@ function CurationPage() {
                         borderTop: `5px solid`,
                         borderColor: `${statusInfo.color}.main`,
                         opacity: isProcessingThisRow ? 0.7 : 1,
+                        transition: '0.3s',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                        },
                       }}
+                      className="curation-card"
                     >
                       <CardHeader
                         action={
@@ -674,9 +817,21 @@ function CurationPage() {
                           },
                         }}
                         sx={{ pb: 1, alignItems: "flex-start" }}
+                        className="curation-card-header"
                       />
+                      {article["CATEGORIA"] && (
+                        <Box sx={{ px: 2, pb: 1 }}>
+                          <Chip
+                            label={`Categoria: ${article["CATEGORIA"]}`}
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                          />
+                        </Box>
+                      )}
                       <CardContent
                         sx={{ flexGrow: 1, pt: 0, overflowY: "auto" }}
+                        className="curation-card-content"
                       >
                         {visibleHeaders.map((header) => {
                           // Pula colunas de controle
@@ -694,11 +849,12 @@ function CurationPage() {
                               : "N/A";
 
                           return (
-                            <Box key={header} sx={{ mb: 1.5 }}>
+                            <Box key={header} sx={{ mb: 1.5 }} className="curation-card-field">
                               <Typography
                                 variant="body2"
                                 color="text.secondary"
                                 sx={{ fontWeight: "bold" }}
+                                className="curation-card-field-label"
                               >
                                 {header}:
                               </Typography>
@@ -711,6 +867,7 @@ function CurationPage() {
                                   WebkitLineClamp: 3,
                                   WebkitBoxOrient: "vertical",
                                 }}
+                                className="curation-card-field-value"
                               >
                                 {content}
                               </Typography>
@@ -720,65 +877,88 @@ function CurationPage() {
                       </CardContent>
                       <CardActions
                         sx={{ justifyContent: "space-between", pt: 0 }}
+                        className="curation-card-actions"
                       >
                         <Box>
-                          <Button
-                            size="small"
-                            color="error"
-                            startIcon={<DeleteIcon />}
-                            onClick={() => handleSingleDelete(article)}
-                          >
-                            Excluir
-                          </Button>
-                          <Button
-                            size="small"
-                            startIcon={<VisibilityIcon />}
-                            onClick={() =>
-                              handlePreviewPdf(article["URL DO DOCUMENTO"])
-                            }
-                            disabled={!article["URL DO DOCUMENTO"]}
-                            sx={{ ml: 1 }}
-                          >
-                            Visualizar
-                          </Button>
+                          <Tooltip title="Excluir este artigo">
+                            <Button
+                              size="small"
+                              color="error"
+                              startIcon={<DeleteIcon />}
+                              onClick={() => handleSingleDelete(article)}
+                            >
+                              Excluir
+                            </Button>
+                          </Tooltip>
+                          <Tooltip title="Visualizar PDF do documento">
+                            <Button
+                              size="small"
+                              startIcon={<VisibilityIcon />}
+                              onClick={() =>
+                                handlePreviewPdf(article["URL DO DOCUMENTO"])
+                              }
+                              disabled={!article["URL DO DOCUMENTO"]}
+                              sx={{ ml: 1 }}
+                            >
+                              Visualizar
+                            </Button>
+                          </Tooltip>
                         </Box>
                         <Box>
                           {statusInfo.status === "approved_ai" && (
+                            <Tooltip title="Aprovar manualmente este artigo">
+                              <Button
+                                size="small"
+                                color="primary"
+                                startIcon={<CheckCircleIcon />}
+                                onClick={() => handleManualApproval(article)}
+                              >
+                                Aprovar Manualmente
+                              </Button>
+                            </Tooltip>
+                          )}
+                          <Tooltip title={statusInfo.status === "approved" || statusInfo.status === "rejected" ? "Re-analisar com IA" : "Analisar com IA"}>
                             <Button
                               size="small"
-                              color="primary"
-                              startIcon={<CheckCircleIcon />}
-                              onClick={() => handleManualApproval(article)}
+                              startIcon={
+                                isProcessingThisRow ? (
+                                  <CircularProgress size={20} />
+                                ) : statusInfo.status === "approved" ||
+                                  statusInfo.status === "rejected" ? (
+                                  <RefreshIcon />
+                                ) : (
+                                  <ScienceIcon />
+                                )
+                              }
+                              onClick={() => handleSingleCuration(article)}
+                              disabled={
+                                statusInfo.status === "unavailable" ||
+                                isTriggering ||
+                                processingRow
+                              }
                             >
-                              Aprovar Manualmente
+                              {isProcessingThisRow
+                                ? "Analisando..."
+                                : statusInfo.status === "approved" ||
+                                    statusInfo.status === "rejected"
+                                  ? "Re-analisar"
+                                  : "Analisar"}
                             </Button>
-                          )}
-                          <Button
-                            size="small"
-                            startIcon={
-                              isProcessingThisRow ? (
-                                <CircularProgress size={20} />
-                              ) : statusInfo.status === "approved" ||
-                                statusInfo.status === "rejected" ? (
-                                <RefreshIcon />
-                              ) : (
-                                <ScienceIcon />
-                              )
-                            }
-                            onClick={() => handleSingleCuration(article)}
-                            disabled={
-                              statusInfo.status === "unavailable" ||
-                              isTriggering ||
-                              processingRow
-                            }
-                          >
-                            {isProcessingThisRow
-                              ? "Analisando..."
-                              : statusInfo.status === "approved" ||
-                                  statusInfo.status === "rejected"
-                                ? "Re-analisar"
-                                : "Analisar"}
-                          </Button>
+                          </Tooltip>
+                          <Tooltip title="Categorizar com IA">
+                            <Button
+                              size="small"
+                              startIcon={<CategoryIcon />}
+                              onClick={() => handleSingleCategorize(article)}
+                              disabled={
+                                statusInfo.status === "unavailable" ||
+                                isTriggering ||
+                                processingRow
+                              }
+                            >
+                              Categorizar
+                            </Button>
+                          </Tooltip>
                         </Box>
                       </CardActions>
                     </Card>
@@ -796,6 +976,7 @@ function CurationPage() {
               onRowsPerPageChange={handleChangeRowsPerPage}
               labelRowsPerPage="Itens por página:"
               sx={{ mt: 2, mr: 2, display: "flex", justifyContent: "flex-end" }}
+              className="curation-pagination"
             />
           </Box>
         )}

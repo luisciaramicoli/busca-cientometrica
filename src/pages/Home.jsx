@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { 
   Box, 
   Button, 
@@ -14,12 +15,28 @@ import SearchIcon from "@mui/icons-material/Search";
 import ArticleIcon from "@mui/icons-material/Article";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import FolderIcon from "@mui/icons-material/Folder";
 import Header from "../components/Header";
 import { useAuth } from "../hooks/useAuth";
+import { checkApiHealth } from "../api";
 
 function HomePage() {
   const navigate = useNavigate();
   const { userRole } = useAuth();
+  const [apiStatus, setApiStatus] = useState('checking');
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        await checkApiHealth();
+        setApiStatus('online');
+      } catch (error) {
+        setApiStatus('offline');
+      }
+    };
+    checkHealth();
+  }, []);
 
   const menuItems = [
     {
@@ -62,6 +79,20 @@ function HomePage() {
         <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 4 }}>
           Dashboard
         </Typography>
+        <Box sx={{ mb: 4, p: 3, bgcolor: 'white', borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+            Bem-vindo ao Sistema de Busca Cientométrica
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Gerencie suas pesquisas, curate artigos e insira dados manualmente. Status da API: 
+            <Typography component="span" sx={{ 
+              color: apiStatus === 'online' ? 'green' : apiStatus === 'offline' ? 'red' : 'orange',
+              fontWeight: 'bold'
+            }}>
+              {apiStatus === 'online' ? 'Online' : apiStatus === 'offline' ? 'Offline' : 'Verificando...'}
+            </Typography>
+          </Typography>
+        </Box>
         
         <Grid container spacing={3}>
           {menuItems.map((item, index) => (

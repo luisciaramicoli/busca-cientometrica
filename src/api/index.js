@@ -53,6 +53,13 @@ export const triggerSingleCuration = async (rowNumber) => {
   return response.data;
 };
 
+export const categorizeArticleRow = async (rowNumber) => {
+  const response = await api.post("/categorize-single", {
+    row_number: rowNumber,
+  });
+  return response.data;
+};
+
 export const deleteArticleRow = async (rowNumber) => {
   const response = await api.post("/delete-row", { row_number: rowNumber });
   return response.data;

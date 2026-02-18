@@ -6,6 +6,8 @@ import SearchPage from './pages/Search';
 import CurationPage from './pages/Curation';
 import ManualInsertPage from './pages/ManualInsert';
 import UserRegistrationPage from './pages/UserRegistration';
+import ExtractMetadataPage from './pages/ExtractMetadata';
+import BatchProcessDrivePage from './pages/BatchProcessDrive';
 import ProtectedRoute from './components/ProtectedRoute';
 import './styles/App.css';
 
@@ -23,6 +25,8 @@ function App() {
         <Route path="/curation" element={<CurationPage />} />
         <Route path="/manual-insert" element={<ManualInsertPage />} />
         <Route path="/register-user" element={<UserRegistrationPage />} />
+        <Route path="/extract-metadata" element={<ExtractMetadataPage />} />
+        <Route path="/batch-process-drive" element={<BatchProcessDrivePage />} />
       </Route>
       
       {/* Redirecionamento padrão */}

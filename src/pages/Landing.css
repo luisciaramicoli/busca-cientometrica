@@ -7,6 +7,14 @@
         radial-gradient(at 100% 0%, hsla(260,100%,35%,1) 0, transparent 50%),
         radial-gradient(at 0% 100%, hsla(200,100%,40%,1) 0, transparent 50%);
     background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    padding: 2rem;
+    box-sizing: border-box;
 }
 
 @keyframes float {
@@ -45,9 +53,53 @@ html {
     }
 }
 
-@media (max-width: 600px) {
+.landing-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.landing-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.landing-subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.landing-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
     .hero-gradient {
-        padding-top: 80px;
-        padding-bottom: 80px;
+        padding: 1rem;
+        min-height: auto;
+    }
+
+    .landing-title {
+        font-size: 2rem;
+    }
+
+    .landing-subtitle {
+        font-size: 1rem;
+    }
+
+    .landing-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .landing-title {
+        font-size: 1.5rem;
     }
 }
