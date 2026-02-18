@@ -1,37 +1,40 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Container,
-  Alert,
-  IconButton,     // Added
-  InputAdornment, // Added
+import { useNavigate, Link as RouterLink } from "react-router-dom";
+import { 
+  Box, 
+  Paper, 
+  TextField, 
+  Button, 
+  Typography, 
+  Container, 
+  Alert, 
+  IconButton, 
+  InputAdornment,
+  CircularProgress
 } from "@mui/material";
-import { Visibility, VisibilityOff } from '@mui/icons-material'; // Added
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from "../hooks/useAuth";
+import ScienceIcon from "@mui/icons-material/Science";
 import "./Login.css";
 import { login } from "../api";
 
 function LoginPage() {
   const navigate = useNavigate();
   const auth = useAuth();
-  const [username, setUsername] = useState("admin"); // Pré-popula para facilitar o teste
-  const [password, setPassword] = useState("password123"); // Pré-popula para facilitar o teste
+  const [username, setUsername] = useState("admin");
+  const [password, setPassword] = useState("password123");
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // Added state for password visibility
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
     try {
       const { accessToken } = await login(username, password);
-
       auth.login(accessToken);
-
       navigate("/home");
     } catch (err) {
       console.error("Login failed:", err);
@@ -39,24 +42,38 @@ function LoginPage() {
         err.response?.data?.error ||
         "Falha no login. Verifique suas credenciais.";
       setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleClickShowPassword = () => setShowPassword((show) => !show); // Added
-  const handleMouseDownPassword = (event) => { event.preventDefault(); }; // Added
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleMouseDownPassword = (event) => { event.preventDefault(); };
 
   return (
-    <Box className="login-container">
-      <Paper elevation={3} className="login-paper">
-        <Box className="login-box">
-          <Typography component="h1" variant="h5">
-            Login
-          </Typography>
-          <Box
-            component="form"
-            onSubmit={handleLogin}
-            sx={{ mt: 1, width: "100%" }}
-          >
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f8fafc' }}>
+      <Box sx={{ p: 2 }}>
+        <Button 
+          component={RouterLink} 
+          to="/" 
+          startIcon={<ArrowBackIcon />} 
+          sx={{ color: 'text.secondary' }}
+        >
+          Voltar para Home
+        </Button>
+      </Box>
+      <Container maxWidth="sm" sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', pb: 8 }}>
+        <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, width: '100%', borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+            <ScienceIcon color="primary" sx={{ fontSize: 48, mb: 2 }} />
+            <Typography component="h1" variant="h4" sx={{ fontWeight: 700 }}>
+              Acesso Restrito
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Insira suas credenciais para gerenciar a plataforma
+            </Typography>
+          </Box>
+          <Box component="form" onSubmit={handleLogin} noValidate>
             <TextField
               margin="normal"
               required
@@ -68,6 +85,7 @@ function LoginPage() {
               autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
             <TextField
               margin="normal"
@@ -75,12 +93,13 @@ function LoginPage() {
               fullWidth
               name="password"
               label="Senha"
-              type={showPassword ? 'text' : 'password'} // Changed type dynamically
+              type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              InputProps={{ // Added InputProps for the icon
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
@@ -96,7 +115,7 @@ function LoginPage() {
               }}
             />
             {error && (
-              <Alert severity="error" sx={{ mt: 2, width: "100%" }}>
+              <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
                 {error}
               </Alert>
             )}
@@ -104,13 +123,15 @@ function LoginPage() {
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              size="large"
+              disabled={loading}
+              sx={{ mt: 4, mb: 2, py: 1.5, borderRadius: 2, fontWeight: 'bold' }}
             >
-              Entrar
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
             </Button>
           </Box>
-        </Box>
-      </Paper>
+        </Paper>
+      </Container>
     </Box>
   );
 }

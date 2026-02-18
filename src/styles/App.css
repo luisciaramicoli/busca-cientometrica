@@ -1,31 +1,57 @@
+:root {
+  --primary-color: #1976d2;
+  --secondary-color: #424242;
+  --background-color: #f4f6f8;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-color);
+}
+
 .page-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: #f4f6f8;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-content {
-    flex-grow: 1;
-    padding: 32px 0;
+  flex: 1;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 32px;
+@media (max-width: 600px) {
+  .main-content {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 1rem;
+  }
+  
+  .MuiTypography-h4 {
+    font-size: 1.75rem !important;
+  }
 }
 
-.page-title-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.page-actions {
-    display: flex;
-    gap: 16px;
-    margin-left: auto;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #999;
 }

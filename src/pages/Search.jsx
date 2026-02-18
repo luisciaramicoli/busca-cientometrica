@@ -56,11 +56,11 @@ function SearchPage() {
     <Box className="page-container">
       <Header />
       <Container component="main" className="main-content" maxWidth="lg">
-        <Box className="page-title-container" sx={{ mb: 4 }}>
-            <IconButton component={RouterLink} to="/" sx={{ color: 'inherit' }}>
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center' }}>
+            <IconButton component={RouterLink} to="/" sx={{ mr: 1, color: 'inherit' }}>
                 <ArrowBackIcon />
             </IconButton>
-            <Typography variant="h4" component="h1">
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
                 Busca de Artigos
             </Typography>
         </Box>

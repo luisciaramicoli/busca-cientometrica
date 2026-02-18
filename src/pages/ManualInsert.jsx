@@ -219,106 +219,122 @@ const ManualInsertPage = () => {
       <Header />
       <Container component="main" maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <IconButton component={RouterLink} to="/home" sx={{ mr: 1 }}>
+          <IconButton component={RouterLink} to="/home" sx={{ mr: 1, color: 'inherit' }}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h4" component="h1">
-            Inserção Manual de Artigos
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
+            Inserção Manual
           </Typography>
         </Box>
 
         {/* Batch Processing Section */}
-        <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
-          <Typography variant="h6" gutterBottom>1. Inserção em Lote via Google Drive</Typography>
-          <TextField
-            label="ID da Pasta do Google Drive"
-            variant="outlined"
-            fullWidth
-            value={folderId}
-            onChange={(e) => setFolderId(e.target.value)}
-            sx={{ mb: 2 }}
-            disabled={batchLoading}
-          />
-          <Button
-            variant="contained"
-            startIcon={batchLoading ? <CircularProgress size={20} color="inherit" /> : <CloudUploadIcon />}
-            fullWidth
-            onClick={handleBatchProcess}
-            disabled={batchLoading || !folderId}
-          >
-            {batchLoading ? 'Processando...' : 'Processar Artigos da Pasta'}
-          </Button>
-          {batchError && <Alert severity="error" sx={{ mt: 2 }}>{batchError}</Alert>}
-          {batchSuccess && <Alert severity="success" sx={{ mt: 2 }}>{batchSuccess}</Alert>}
+        <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, mb: 4, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>1. Inserção em Lote via Google Drive</Typography>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mt: 2 }}>
+            <TextField
+              label="ID da Pasta do Google Drive"
+              variant="outlined"
+              fullWidth
+              size="small"
+              value={folderId}
+              onChange={(e) => setFolderId(e.target.value)}
+              disabled={batchLoading}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            />
+            <Button
+              variant="contained"
+              startIcon={batchLoading ? <CircularProgress size={20} color="inherit" /> : <CloudUploadIcon />}
+              onClick={handleBatchProcess}
+              disabled={batchLoading || !folderId}
+              sx={{ borderRadius: 2, whiteSpace: 'nowrap', px: 4 }}
+            >
+              {batchLoading ? 'Processando...' : 'Processar Pasta'}
+            </Button>
+          </Box>
+          {batchError && <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>{batchError}</Alert>}
+          {batchSuccess && <Alert severity="success" sx={{ mt: 2, borderRadius: 2 }}>{batchSuccess}</Alert>}
         </Paper>
 
         {/* Extraction Section */}
-        <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
-          <Typography variant="h6" gutterBottom>2. Extrair Metadados (Opcional)</Typography>
-          <Grid container spacing={2} alignItems="center">
-            <Grid xs={12} sm={7}>
+        <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, mb: 4, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>2. Extrair Metadados (Opcional)</Typography>
+          <Grid container spacing={3} alignItems="center" sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
               <TextField
                 label="Buscar por Título do Artigo"
                 variant="outlined"
                 fullWidth
+                size="small"
                 value={searchTitle}
                 onChange={(e) => setSearchTitle(e.target.value)}
                 disabled={loading}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Grid>
-            <Grid xs={12} sm={1} sx={{ textAlign: 'center' }}>
-              <Typography color="text.secondary">OU</Typography>
+            <Grid item xs={12} md={1} sx={{ textAlign: 'center' }}>
+              <Typography color="text.secondary" sx={{ fontWeight: 'bold' }}>OU</Typography>
             </Grid>
-            <Grid xs={12} sm={4}>
+            <Grid item xs={12} md={5}>
                <Button
                 component="label"
                 variant="outlined"
                 startIcon={<CloudUploadIcon />}
                 fullWidth
+                sx={{ borderRadius: 2, py: 1 }}
               >
                 Upload PDF
                 <input type="file" hidden onChange={handleFileChange} accept="application/pdf" />
               </Button>
-              {file && <Typography variant="caption" display="block" sx={{mt: 1, textAlign: 'center'}}>{file.name}</Typography>}
+              {file && <Typography variant="caption" display="block" sx={{mt: 1, textAlign: 'center', color: 'primary.main', fontWeight: 500}}>{file.name}</Typography>}
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleExtract}
+                  disabled={loading || (!searchTitle && !file)}
+                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+                  sx={{ borderRadius: 2, px: 6, py: 1 }}
+                >
+                  {loading ? 'Extraindo...' : 'Extrair Dados'}
+                </Button>
+              </Box>
             </Grid>
           </Grid>
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              onClick={handleExtract}
-              disabled={loading || (!searchTitle && !file)}
-              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
-            >
-              {loading ? 'Extraindo...' : 'Extrair Dados'}
-            </Button>
-          </Box>
         </Paper>
 
         {/* Form Section */}
-        <Paper elevation={2} sx={{ p: 3 }}>
-           <Typography variant="h6" gutterBottom>2. Revisar e Salvar Dados</Typography>
-           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-           {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+        <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>3. Revisar e Salvar Dados</Typography>
+           {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>}
+           {success && <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>{success}</Alert>}
            <Grid container spacing={2}>
               {Object.keys(formData).map((key) => (
-                <Grid size={{ xs: 12, sm: (key === 'Título' || key === 'Autor(es)' ? 12 : 6), md: (key === 'Título' || key === 'Autor(es)' ? 6 : 4) }} key={key}>
+                <Grid item xs={12} sm={key === 'Titulo' || key === 'Autor(es)' || key === 'Resumo' ? 12 : 6} md={key === 'Titulo' || key === 'Autor(es)' || key === 'Resumo' ? 12 : 4} key={key}>
                   <TextField
                     name={key}
-                    label={key.replace('_', ' ')}
+                    label={key}
                     value={formData[key]}
                     onChange={handleInputChange}
                     fullWidth
-                    variant="filled"
+                    variant="outlined"
+                    size="small"
+                    multiline={key === 'Resumo' || key === 'Titulo'}
+                    rows={key === 'Resumo' ? 3 : 1}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                   />
                 </Grid>
               ))}
            </Grid>
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
               <Button
                 variant="contained"
                 color="primary"
+                size="large"
                 onClick={handleSave}
                 disabled={loading || !formData.Titulo}
+                sx={{ borderRadius: 2, px: 8, py: 1.5, fontWeight: 'bold' }}
               >
                 {loading ? 'Salvando...' : 'Salvar Artigo na Planilha'}
               </Button>

@@ -1,17 +1,19 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/Login';
+import LandingPage from './pages/Landing'; // Nova página de Landing
 import HomePage from './pages/Home';
 import SearchPage from './pages/Search';
 import CurationPage from './pages/Curation';
 import ManualInsertPage from './pages/ManualInsert';
-import UserRegistrationPage from './pages/UserRegistration'; // Import UserRegistrationPage
+import UserRegistrationPage from './pages/UserRegistration';
 import ProtectedRoute from './components/ProtectedRoute';
 import './styles/App.css';
 
 function App() {
   return (
     <Routes>
-      {/* Rota pública de login */}
+      {/* Rota pública inicial */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
 
       {/* Rotas protegidas */}
@@ -20,11 +22,11 @@ function App() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/curation" element={<CurationPage />} />
         <Route path="/manual-insert" element={<ManualInsertPage />} />
-        <Route path="/register-user" element={<UserRegistrationPage />} /> {/* New User Registration Route */}
+        <Route path="/register-user" element={<UserRegistrationPage />} />
       </Route>
       
       {/* Redirecionamento padrão */}
-      <Route path="*" element={<Navigate to="/home" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

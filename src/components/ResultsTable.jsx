@@ -19,6 +19,7 @@ import {
   Select,
   MenuItem,
   Grid,
+  Stack,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -178,11 +179,11 @@ const ResultsTable = ({ results, onSave, loading }) => {
   return (
     <Paper sx={{ p: { xs: 2, md: 3 }, border: 1, borderColor: 'divider', borderRadius: 2, mb: 4 }} elevation={0}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: 'bold' }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
           Resultados da Busca
         </Typography>
-        <Grid container spacing={3} alignItems="flex-end">
-          <Grid item xs={12} md={6}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} lg={6}>
              <TextField
               label="Filtrar por Título ou Autor"
               variant="outlined"
@@ -191,9 +192,10 @@ const ResultsTable = ({ results, onSave, loading }) => {
               placeholder="Ex: 'Smith' ou 'Climate Change'..."
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
           </Grid>
-          <Grid item xs={6} md={3}>
+          <Grid item xs={12} sm={6} lg={3}>
             <FormControl fullWidth size="small" variant="outlined">
               <InputLabel id="select-orderby-label">Ordenar por</InputLabel>
               <Select
@@ -201,6 +203,7 @@ const ResultsTable = ({ results, onSave, loading }) => {
                 value={orderBy}
                 label="Ordenar por"
                 onChange={(e) => setOrderBy(e.target.value)}
+                sx={{ borderRadius: 2 }}
               >
                 {headCells.map((cell) => (
                   <MenuItem key={cell.id} value={cell.id}>
@@ -210,7 +213,7 @@ const ResultsTable = ({ results, onSave, loading }) => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={6} md={3}>
+          <Grid item xs={12} sm={6} lg={3}>
              <FormControl fullWidth size="small" variant="outlined">
               <InputLabel id="select-order-label">Ordem</InputLabel>
               <Select
@@ -218,6 +221,7 @@ const ResultsTable = ({ results, onSave, loading }) => {
                 value={order}
                 label="Ordem"
                 onChange={(e) => setOrder(e.target.value)}
+                sx={{ borderRadius: 2 }}
               >
                 <MenuItem value="asc">Crescente</MenuItem>
                 <MenuItem value="desc">Decrescente</MenuItem>
@@ -227,12 +231,18 @@ const ResultsTable = ({ results, onSave, loading }) => {
         </Grid>
       </Box>
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 3 }}>
+      <Stack 
+        direction={{ xs: 'column', sm: 'row' }} 
+        spacing={2} 
+        justifyContent="flex-end" 
+        sx={{ mb: 3 }}
+      >
         <Button
             variant="outlined"
             onClick={handleExportBibTeX}
             disabled={selected.length === 0}
             startIcon={<DownloadIcon />}
+            sx={{ borderRadius: 2 }}
         >
             Exportar BibTeX
         </Button>
@@ -243,10 +253,11 @@ const ResultsTable = ({ results, onSave, loading }) => {
           loading={loading}
           loadingPosition="start"
           startIcon={<SaveIcon />}
+          sx={{ borderRadius: 2 }}
         >
           Salvar no Google Sheets ({selected.length})
         </Button>
-      </Box>
+      </Stack>
       <TableContainer>
         <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle">
           <EnhancedTableHead

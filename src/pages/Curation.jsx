@@ -474,37 +474,38 @@ function CurationPage() {
     <Box className="page-container">
       <Header />
       <Container component="main" className="main-content" maxWidth="xl">
-        <Box className="page-header">
-          <Box className="page-title-container">
-            <IconButton component={RouterLink} to="/" sx={{ color: "inherit" }}>
+        <Box sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton component={RouterLink} to="/" sx={{ mr: 1, color: "inherit" }}>
               <ArrowBackIcon />
             </IconButton>
-            <Typography variant="h4" component="h1">
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
               Artigos em Curadoria
             </Typography>
           </Box>
-          <Box className="page-actions">
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="contained"
+              fullWidth
               startIcon={<PlayCircleOutlineIcon />}
               onClick={handleTriggerCuration}
               disabled={isTriggering || processingRow}
             >
               {isTriggering
                 ? "Processando Lote..."
-                : "Analisar Pendentes (Lote)"}
+                : "Analisar Pendentes"}
             </Button>
             <Button
               variant="outlined"
               color="error"
+              fullWidth
               startIcon={<DeleteIcon />}
               onClick={handleDeleteUnavailable}
               disabled={isTriggering || processingRow}
-              sx={{ ml: 2 }}
             >
               Excluir Indisponíveis
             </Button>
-          </Box>
+          </Stack>
         </Box>
 
         <Paper elevation={1} sx={{ p: 2, mb: 4 }}>
