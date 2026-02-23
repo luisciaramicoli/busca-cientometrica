@@ -1,70 +1,114 @@
 import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
-    palette: {
-        mode: 'light',
-        primary: {
-            main: '#1976d2', // Um azul clássico
-        },
-        secondary: {
-            main: '#424242', // Um cinza escuro
-        },
-        background: {
-            default: '#f4f6f8', // Fundo cinza claro
-            paper: '#ffffff', // Branco para cartões e papéis
-        },
-        text: {
-            primary: '#212121', // Cinza escuro para o texto principal
-            secondary: '#5f6368', // Cinza mais claro para texto secundário
-        }
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#1b5e20', // Verde escuro acadêmico (Forest Green)
+      light: '#4c8c4a',
+      dark: '#003300',
+      contrastText: '#ffffff',
     },
-    typography: {
-        fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-        h1: {
-            fontFamily: '"Roboto Slab", serif',
-            fontWeight: 700,
-        },
-        h2: {
-            fontFamily: '"Roboto Slab", serif',
-            fontWeight: 700,
-        },
-        h3: {
-            fontFamily: '"Roboto Slab", serif',
-            fontWeight: 700,
-        },
-        h4: {
-            fontFamily: '"Roboto Slab", serif',
-            fontWeight: 700,
-        },
-        h5: {
-            fontFamily: '"Roboto Slab", serif',
-            fontWeight: 700,
-        },
-        h6: {
-            fontFamily: '"Roboto Slab", serif',
-            fontWeight: 700,
-        }
+    secondary: {
+      main: '#ffa000', // Âmbar para destaques (Gold/Amber)
+      light: '#ffc107',
+      dark: '#c67100',
+      contrastText: '#000000',
     },
-    components: {
-        MuiAppBar: {
-            styleOverrides: {
-                root: {
-                    backgroundColor: '#ffffff',
-                    color: '#212121',
-                    borderBottom: '1px solid #e0e0e0'
-                }
-            }
+    background: {
+      default: '#f8f9fa',
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#1a1a1b',
+      secondary: '#4a4a4b',
+    },
+    divider: 'rgba(0, 0, 0, 0.08)',
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontWeight: 800,
+      letterSpacing: '-0.02em',
+    },
+    h2: {
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+    },
+    h3: {
+      fontWeight: 700,
+    },
+    h4: {
+      fontWeight: 600,
+    },
+    h5: {
+      fontWeight: 600,
+    },
+    h6: {
+      fontWeight: 600,
+    },
+    button: {
+      textTransform: 'none', // Botões mais modernos sem caps lock
+      fontWeight: 600,
+    },
+  },
+  shape: {
+    borderRadius: 12, // Bordas mais suaves e modernas
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          padding: '8px 24px',
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          },
         },
-        MuiCard: {
-            styleOverrides: {
-                root: {
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                }
-            }
-        }
-    }
+        containedPrimary: {
+          '&:hover': {
+            backgroundColor: '#2e7d32',
+          },
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff',
+          color: '#1b5e20',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          borderBottom: '1px solid rgba(0,0,0,0.08)',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+          border: '1px solid rgba(0,0,0,0.05)',
+          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        elevation1: {
+          boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+        },
+      },
+    },
+    MuiTextField: {
+      defaultProps: {
+        variant: 'outlined',
+        size: 'small',
+      },
+    },
+  },
 });
 
 export default theme;

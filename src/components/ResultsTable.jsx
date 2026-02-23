@@ -20,9 +20,18 @@ import {
   MenuItem,
   Grid,
   Stack,
+  Tooltip,
+  IconButton,
+  Chip,
+  Avatar,
+  Fade,
+  LinearProgress
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import DownloadIcon from '@mui/icons-material/Download';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import ArticleIcon from '@mui/icons-material/Article';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 const headCells = [
   { id: 'title', label: 'Título' },
@@ -39,7 +48,7 @@ function EnhancedTableHead(props) {
   };
 
   return (
-    <TableHead>
+    <TableHead sx={{ bgcolor: 'grey.50' }}>
       <TableRow>
         <TableCell padding="checkbox">
           <Checkbox
@@ -47,7 +56,7 @@ function EnhancedTableHead(props) {
             indeterminate={numSelected > 0 && numSelected < rowCount}
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
-            inputProps={{ 'aria-label': 'select all results' }}
+            inputProps={{ 'aria-label': 'selecionar todos' }}
           />
         </TableCell>
         {headCells.map((headCell) => (
@@ -56,7 +65,7 @@ function EnhancedTableHead(props) {
             align="left"
             padding="normal"
             sortDirection={orderBy === headCell.id ? order : false}
-            sx={{ fontWeight: 'bold' }}
+            sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: 1 }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -157,15 +166,12 @@ const ResultsTable = ({ results, onSave, loading }) => {
       let aValue = a[orderBy];
       let bValue = b[orderBy];
 
-      // Handle null/undefined
       if (aValue === null || aValue === undefined) aValue = '';
       if (bValue === null || bValue === undefined) bValue = '';
 
-      // Handle arrays (authors)
       if (Array.isArray(aValue)) aValue = aValue.join(', ');
       if (Array.isArray(bValue)) bValue = bValue.join(', ');
 
-      // String comparison for text, numeric for numbers if possible
       if (typeof aValue === 'string') aValue = aValue.toLowerCase();
       if (typeof bValue === 'string') bValue = bValue.toLowerCase();
 
@@ -177,143 +183,144 @@ const ResultsTable = ({ results, onSave, loading }) => {
   }, [filteredResults, order, orderBy]);
 
   return (
-    <Paper sx={{ p: { xs: 2, md: 3 }, border: 1, borderColor: 'divider', borderRadius: 2, mb: 4 }} elevation={0}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-          Resultados da Busca
-        </Typography>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} lg={6}>
-             <TextField
-              label="Filtrar por Título ou Autor"
-              variant="outlined"
-              size="small"
-              fullWidth
-              placeholder="Ex: 'Smith' ou 'Climate Change'..."
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} lg={3}>
-            <FormControl fullWidth size="small" variant="outlined">
-              <InputLabel id="select-orderby-label">Ordenar por</InputLabel>
-              <Select
-                labelId="select-orderby-label"
-                value={orderBy}
-                label="Ordenar por"
-                onChange={(e) => setOrderBy(e.target.value)}
-                sx={{ borderRadius: 2 }}
-              >
-                {headCells.map((cell) => (
-                  <MenuItem key={cell.id} value={cell.id}>
-                    {cell.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6} lg={3}>
-             <FormControl fullWidth size="small" variant="outlined">
-              <InputLabel id="select-order-label">Ordem</InputLabel>
-              <Select
-                labelId="select-order-label"
-                value={order}
-                label="Ordem"
-                onChange={(e) => setOrder(e.target.value)}
-                sx={{ borderRadius: 2 }}
-              >
-                <MenuItem value="asc">Crescente</MenuItem>
-                <MenuItem value="desc">Decrescente</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </Box>
-
-      <Stack 
-        direction={{ xs: 'column', sm: 'row' }} 
-        spacing={2} 
-        justifyContent="flex-end" 
-        sx={{ mb: 3 }}
-      >
-        <Button
-            variant="outlined"
-            onClick={handleExportBibTeX}
-            disabled={selected.length === 0}
-            startIcon={<DownloadIcon />}
-            sx={{ borderRadius: 2 }}
-        >
-            Exportar BibTeX
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={selected.length === 0}
-          loading={loading}
-          loadingPosition="start"
-          startIcon={<SaveIcon />}
-          sx={{ borderRadius: 2 }}
-        >
-          Salvar no Google Sheets ({selected.length})
-        </Button>
-      </Stack>
-      <TableContainer>
-        <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle">
-          <EnhancedTableHead
-            numSelected={selected.length}
-            order={order}
-            orderBy={orderBy}
-            onSelectAllClick={handleSelectAllClick}
-            onRequestSort={handleRequestSort}
-            rowCount={filteredResults.length}
-          />
-          <TableBody>
-            {sortedResults.map((row, index) => {
-              const uniqueId = row.id ?? `row-${index}`;
-              const isItemSelected = isSelected(uniqueId);
-              const authorsText = Array.isArray(row.authors) ? row.authors.join(', ') : row.authors;
-
-              return (
-                <TableRow
-                  hover
-                  onClick={(event) => handleClick(event, uniqueId)}
-                  role="checkbox"
-                  aria-checked={isItemSelected}
-                  tabIndex={-1}
-                  key={uniqueId}
-                  selected={isItemSelected}
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+    <Fade in timeout={800}>
+      <Paper sx={{ borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+        {loading && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0 }} />}
+        
+        <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'white' }}>
+          <Grid container spacing={3} alignItems="center">
+            <Grid item xs={12} md={4}>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Avatar sx={{ bgcolor: 'secondary.main', width: 40, height: 40 }}>
+                  <ArticleIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>Resultados</Typography>
+                  <Typography variant="caption" color="text.secondary">{filteredResults.length} artigos encontrados</Typography>
+                </Box>
+              </Stack>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="flex-end">
+                <TextField
+                  placeholder="Filtrar nesta lista..."
+                  size="small"
+                  value={filterText}
+                  onChange={(e) => setFilterText(e.target.value)}
+                  InputProps={{
+                    startAdornment: <FilterAltIcon fontSize="small" color="action" sx={{ mr: 1 }} />,
+                    sx: { borderRadius: '50px', bgcolor: 'grey.50', width: { md: 250 } }
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={handleExportBibTeX}
+                  disabled={selected.length === 0}
+                  startIcon={<DownloadIcon />}
+                  sx={{ borderRadius: '50px', fontWeight: 700 }}
                 >
-                  <TableCell padding="checkbox">
-                    <Checkbox color="primary" checked={isItemSelected} />
-                  </TableCell>
-                  <TableCell component="th" scope="row">
-                    <Link href={row.id} target="_blank" rel="noopener" underline="hover" color="inherit">
-                      {row.title || '—'}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{authorsText || '—'}</TableCell>
-                  <TableCell>{row.year || '—'}</TableCell>
-                  <TableCell>{row.source || '—'}</TableCell>
-                  <TableCell>
-                    {row.doi ? (
-                      <Link href={`https://doi.org/${row.doi}`} target="_blank" rel="noopener" underline="hover">
-                        {row.doi}
-                      </Link>
-                    ) : (
-                      '—'
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Paper>
+                  BibTeX
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleSave}
+                  disabled={selected.length === 0 || loading}
+                  startIcon={<SaveIcon />}
+                  sx={{ borderRadius: '50px', fontWeight: 800, px: 3 }}
+                >
+                  Salvar Selecionados ({selected.length})
+                </Button>
+              </Stack>
+            </Grid>
+          </Grid>
+        </Box>
+
+        <TableContainer sx={{ maxHeight: 600 }}>
+          <Table stickyHeader aria-label="resultados da busca">
+            <EnhancedTableHead
+              numSelected={selected.length}
+              order={order}
+              orderBy={orderBy}
+              onSelectAllClick={handleSelectAllClick}
+              onRequestSort={handleRequestSort}
+              rowCount={filteredResults.length}
+            />
+            <TableBody>
+              {sortedResults.map((row, index) => {
+                const uniqueId = row.id ?? `row-${index}`;
+                const isItemSelected = isSelected(uniqueId);
+                const authorsText = Array.isArray(row.authors) ? row.authors.join(', ') : row.authors;
+
+                return (
+                  <TableRow
+                    hover
+                    onClick={(event) => handleClick(event, uniqueId)}
+                    role="checkbox"
+                    aria-checked={isItemSelected}
+                    tabIndex={-1}
+                    key={uniqueId}
+                    selected={isItemSelected}
+                    sx={{ 
+                      cursor: 'pointer',
+                      '&.Mui-selected': { bgcolor: 'rgba(27, 94, 32, 0.08) !important' },
+                      '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.02) !important' }
+                    }}
+                  >
+                    <TableCell padding="checkbox">
+                      <Checkbox color="primary" checked={isItemSelected} />
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 400 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}>
+                        {row.title || 'Sem título'}
+                      </Typography>
+                      {row.pdf_url && (
+                        <Link 
+                          href={row.pdf_url} 
+                          target="_blank" 
+                          rel="noopener" 
+                          sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, fontSize: '0.7rem', fontWeight: 600 }}
+                        >
+                          ACESSO AO PDF <OpenInNewIcon sx={{ fontSize: 10 }} />
+                        </Link>
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: '0.85rem' }}>
+                      <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>{authorsText || '—'}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip label={row.year || '—'} size="small" sx={{ fontWeight: 700, borderRadius: 1 }} />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                        {row.source || '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {row.doi ? (
+                        <Tooltip title="Abrir DOI">
+                          <IconButton size="small" href={`https://doi.org/${row.doi}`} target="_blank" rel="noopener">
+                            <Link sx={{ fontSize: '0.75rem', fontWeight: 600, textDecoration: 'none' }}>{row.doi.substring(0, 15)}...</Link>
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        '—'
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        
+        {filteredResults.length === 0 && !loading && (
+          <Box sx={{ p: 8, textAlign: 'center' }}>
+            <Typography color="text.secondary" variant="h6">Nenhum resultado para exibir.</Typography>
+          </Box>
+        )}
+      </Paper>
+    </Fade>
   );
 };
-
 
 export default ResultsTable;

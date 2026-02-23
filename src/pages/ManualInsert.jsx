@@ -9,83 +9,62 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Input,
   IconButton,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Tooltip,
   Chip,
   Divider,
+  Stack,
+  Avatar,
+  Fade,
+  Stepper,
+  Step,
+  StepLabel
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import SearchIcon from "@mui/icons-material/Search";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import InfoIcon from "@mui/icons-material/Info";
 import SaveIcon from "@mui/icons-material/Save";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import Header from "../components/Header";
 import {
   manualInsertArticle,
   extractMetadata,
   checkApiHealth,
-  processLocalFolder,
 } from "../api";
 
 const ManualInsertPage = () => {
-  // State for form fields
   const [formData, setFormData] = useState({
-    "Autor(es)": "N/A",
-    "Titulo": "N/A",
-    "Subtítulo": "N/A",
-    "Ano": "N/A",
-    "Número de citações recebidas (Google Scholar)": "N/A",
-    "Palavras-chave": "N/A",
-    "Resumo": "N/A",
-    "Tipo de documento": "N/A",
-    "Editora": "N/A",
-    "Instituição": "N/A",
-    "Local": "N/A",
-    "Tipo de trabalho": "N/A",
-    "Título do periódico": "N/A",
-    "Quartil do periódico": "N/A",
-    "Volume": "N/A",
-    "Número/fascículo": "N/A",
-    "Páginas": "N/A",
-    "DOI": "N/A",
-    "Numeração": "N/A",
-    "Qualis": "N/A",
-    "pub_url": "N/A", // keep document URL but not other post-Qualis fields
+    "Autor(es)": "",
+    "Titulo": "",
+    "Subtítulo": "",
+    "Ano": "",
+    "Número de citações recebidas (Google Scholar)": "",
+    "Palavras-chave": "",
+    "Resumo": "",
+    "Tipo de documento": "",
+    "Editora": "",
+    "Instituição": "",
+    "Local": "",
+    "Tipo de trabalho": "",
+    "Título do periódico": "",
+    "Quartil do periódico": "",
+    "Volume": "",
+    "Número/fascículo": "",
+    "Páginas": "",
+    "DOI": "",
+    "Numeração": "",
+    "Qualis": "",
+    "pub_url": "",
   });
 
-  // State for the extraction query
   const [searchTitle, setSearchTitle] = useState("");
   const [file, setFile] = useState(null);
-
-  // UI State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  // State for batch processing
-  const [folderPath, setFolderPath] = useState("");
-  const [batchLoading, setBatchLoading] = useState(false);
-  const [batchError, setBatchError] = useState("");
-  const [batchSuccess, setBatchSuccess] = useState("");
-
-  useEffect(() => {
-    const apiHealthCheck = async () => {
-      try {
-        console.log("Checking Node.js API health...");
-        const response = await checkApiHealth();
-        console.log("Node.js API Health Check OK:", response);
-      } catch (err) {
-        console.error("Node.js API Health Check FAILED:", err);
-      }
-    };
-    apiHealthCheck();
-  }, []); // Empty dependency array means this runs once on mount
+  const [activeStep, setActiveStep] = useState(0);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -98,7 +77,7 @@ const ManualInsertPage = () => {
 
   const handleExtract = async () => {
     if (!searchTitle && !file) {
-      setError("Por favor, forneça um título ou um arquivo PDF.");
+      setError("Forneça o título ou o PDF para extração automática.");
       return;
     }
 
@@ -107,321 +86,175 @@ const ManualInsertPage = () => {
     setSuccess("");
 
     const extractionData = new FormData();
-    if (searchTitle) {
-      extractionData.append("title", searchTitle);
-    }
-    if (file) {
-      extractionData.append("file", file);
-    }
+    if (searchTitle) extractionData.append("title", searchTitle);
+    if (file) extractionData.append("file", file);
 
     try {
       const response = await extractMetadata(extractionData);
-
-      // Update form data with the extracted metadata
-      // Only merge fields up to and including 'Qualis'
       setFormData((prev) => {
-        const allKeys = Object.keys(prev);
-        const qualisIndex = allKeys.indexOf("Qualis");
-        const allowedKeys =
-          qualisIndex !== -1 ? allKeys.slice(0, qualisIndex + 1) : allKeys;
-        const partial = {};
-        allowedKeys.forEach((k) => {
-          if (response && Object.prototype.hasOwnProperty.call(response, k)) {
-            partial[k] = response[k];
-          }
+        const updated = { ...prev };
+        Object.keys(response).forEach(key => {
+          if (key in updated) updated[key] = response[key];
         });
-        return {
-          ...prev,
-          ...partial,
-        };
+        return updated;
       });
-
-      setSuccess("Metadados extraídos com sucesso! Revise e salve.");
+      setSuccess("Dados extraídos com sucesso! Revise os campos abaixo.");
+      setActiveStep(1);
     } catch (err) {
-      console.error("Metadata extraction failed:", err);
-      const errorMessage =
-        err.response?.data?.detail || "Falha ao extrair metadados.";
-      setError(errorMessage);
+      setError(err.response?.data?.detail || "Falha na extração por IA.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSave = async () => {
+    if (!formData.Titulo || !formData["Autor(es)"]) {
+      setError("Título e Autor(es) são obrigatórios.");
+      return;
+    }
+
     setLoading(true);
     setError("");
-    setSuccess("");
-
-    // Map frontend state to the backend's expected 'manualInsert' schema
-    const dataToSave = {
-      "Autor(es)": formData["Autor(es)"],
-      "Titulo": formData["Titulo"],
-      "Subtítulo": formData["Subtítulo"],
-      "Ano": formData["Ano"],
-      "Número de citações recebidas (Google Scholar)":
-        formData["Número de citações recebidas (Google Scholar)"],
-      "Palavras-chave": formData["Palavras-chave"],
-      "Resumo": formData["Resumo"],
-      "Tipo de documento": formData["Tipo de documento"],
-      "Editora": formData["Editora"],
-      "Instituição": formData["Instituição"],
-      "Local": formData["Local"],
-      "Tipo de trabalho": formData["Tipo de trabalho"],
-      "Título do periódico": formData["Título do periódico"],
-      "Quartil do periódico": formData["Quartil do periódico"],
-      "Volume": formData["Volume"],
-      "Número/fascículo": formData["Número/fascículo"],
-      "Páginas": formData["Páginas"],
-      "DOI": formData["DOI"],
-      "Numeração": formData["Numeração"],
-      "Qualis": formData["Qualis"],
-      "pub_url": formData["pub_url"],
-    };
-
     try {
-      const response = await manualInsertArticle(dataToSave, file);
-      setSuccess(response.message || "Artigo salvo com sucesso!");
-      // Optionally clear the form (only keep fields up to Qualis + pub_url)
+      await manualInsertArticle(formData, file);
+      setSuccess("Artigo catalogado com sucesso na base de dados!");
       setFormData({
-        "Autor(es)": "N/A",
-        "Titulo": "N/A",
-        "Subtítulo": "N/A",
-        "Ano": "N/A",
-        "Número de citações recebidas (Google Scholar)": "N/A",
-        "Palavras-chave": "N/A",
-        "Resumo": "N/A",
-        "Tipo de documento": "N/A",
-        "Editora": "N/A",
-        "Instituição": "N/A",
-        "Local": "N/A",
-        "Tipo de trabalho": "N/A",
-        "Título do periódico": "N/A",
-        "Quartil do periódico": "N/A",
-        "Volume": "N/A",
-        "Número/fascículo": "N/A",
-        "Páginas": "N/A",
-        "DOI": "N/A",
-        "Numeração": "N/A",
-        "Qualis": "N/A",
-        "pub_url": "N/A",
+        "Autor(es)": "", "Titulo": "", "Subtítulo": "", "Ano": "",
+        "Número de citações recebidas (Google Scholar)": "", "Palavras-chave": "",
+        "Resumo": "", "Tipo de documento": "", "Editora": "", "Instituição": "",
+        "Local": "", "Tipo de trabalho": "", "Título do periódico": "",
+        "Quartil do periódico": "", "Volume": "", "Número/fascículo": "",
+        "Páginas": "", "DOI": "", "Numeração": "", "Qualis": "", "pub_url": "",
       });
       setSearchTitle("");
       setFile(null);
+      setActiveStep(0);
     } catch (err) {
-      console.error("Save failed:", err);
-      const errorMessage =
-        err.response?.data?.error || "Falha ao salvar o artigo.";
-      setError(errorMessage);
+      setError(err.response?.data?.error || "Erro ao salvar artigo.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBatchProcess = async () => {
-    if (!folderPath) {
-      setBatchError("Por favor, insira o caminho da Pasta Local.");
-      return;
-    }
-
-    setBatchLoading(true);
-    setBatchError("");
-    setBatchSuccess("");
-
-    try {
-      const response = await processLocalFolder(folderPath);
-      setBatchSuccess(
-        response.message ||
-          `Processamento em lote da pasta "${folderPath}" iniciado com sucesso!`,
-      );
-      setFolderPath(""); // Clear folder path after initiating process
-    } catch (err) {
-      console.error("Batch processing failed:", err);
-      const errorMessage =
-        err.response?.data?.error ||
-        "Falha ao iniciar o processamento em lote.";
-      setBatchError(errorMessage);
-    } finally {
-      setBatchLoading(false);
-    }
-  };
-
   return (
-    <Box>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 10 }}>
       <Header />
-      <Container component="main" maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-          <IconButton
-            component={RouterLink}
-            to="/home"
-            sx={{ mr: 1, color: "inherit" }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
-            Inserção Manual
-          </Typography>
-        </Box>
+      
+      <Box sx={{ bgcolor: 'primary.main', color: 'white', py: 6, mb: 4 }}>
+        <Container maxWidth="lg">
+          <Stack direction="row" spacing={2} alignItems="center">
+            <IconButton component={RouterLink} to="/home" sx={{ color: 'white', bgcolor: 'rgba(255,255,255,0.1)' }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Box>
+              <Typography variant="h3" sx={{ fontWeight: 900, color: 'white' }}>Inserção Manual</Typography>
+              <Typography variant="h6" sx={{ opacity: 0.8, fontWeight: 400, color: 'white' }}>Adicione novas evidências com auxílio de IA</Typography>
+            </Box>
+          </Stack>
+        </Container>
+      </Box>
 
-        {/* Extraction Section */}
-        <Accordion defaultExpanded={false} sx={{ mb: 2, borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="extraction-content"
-            id="extraction-header"
-            sx={{ backgroundColor: 'primary.light', color: 'white', borderRadius: 3 }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-              1. Extrair Metadados (Opcional)
-              <Tooltip title="Use esta seção para extrair metadados automaticamente de um título ou PDF">
-                <InfoIcon sx={{ fontSize: '1.2rem', cursor: 'help' }} />
-              </Tooltip>
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ p: { xs: 2, md: 3 } }}>
-            <Grid container spacing={3} alignItems="center" sx={{ mt: 1 }}>
-              <Grid size={{ xs: 12, md: 5 }}>
+      <Container maxWidth="lg">
+        <Stepper activeStep={activeStep} sx={{ mb: 6 }}>
+          <Step><StepLabel>Extração IA</StepLabel></Step>
+          <Step><StepLabel>Revisão de Dados</StepLabel></Step>
+          <Step><StepLabel>Finalização</StepLabel></Step>
+        </Stepper>
+
+        <Grid container spacing={4}>
+          {/* Step 1: Extraction */}
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ p: 4, borderRadius: 4, height: '100%' }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AutoFixHighIcon color="secondary" /> 1. Assistente de IA
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Nossa IA pode preencher os campos automaticamente a partir do PDF ou apenas do título.
+              </Typography>
+              
+              <Stack spacing={3}>
                 <TextField
-                  label="Buscar por Título do Artigo"
-                  variant="outlined"
+                  label="Título do Artigo"
+                  placeholder="Cole o título aqui..."
                   fullWidth
-                  size="small"
                   value={searchTitle}
                   onChange={(e) => setSearchTitle(e.target.value)}
-                  disabled={loading}
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
                 />
-              </Grid>
-              <Grid size={{ xs: 12, md: 2 }} sx={{ textAlign: "center" }}>
-                <Typography color="text.secondary" sx={{ fontWeight: "bold" }}>
-                  OU
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 12, md: 5 }}>
-                <Button
-                  component="label"
-                  variant="outlined"
-                  startIcon={<CloudUploadIcon />}
-                  fullWidth
-                  sx={{ borderRadius: 2, py: 1 }}
-                >
-                  Upload PDF
-                  <input
-                    type="file"
-                    hidden
-                    onChange={handleFileChange}
-                    accept="application/pdf"
-                  />
-                </Button>
-                {file && (
-                  <Chip
-                    label={file.name}
-                    onDelete={() => setFile(null)}
-                    sx={{ mt: 1 }}
-                    color="primary"
-                  />
-                )}
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <Box sx={{ textAlign: "center" }}>
+                
+                <Box>
                   <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={handleExtract}
-                    disabled={loading || (!searchTitle && !file)}
-                    startIcon={
-                      loading ? (
-                        <CircularProgress size={20} color="inherit" />
-                      ) : (
-                        <SearchIcon />
-                      )
-                    }
-                    sx={{ borderRadius: 2, px: 6, py: 1 }}
-                  >
-                    {loading ? "Extraindo..." : "Extrair Dados"}
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
-          </AccordionDetails>
-        </Accordion>
-
-        {/* Form Section */}
-        <Accordion defaultExpanded={true} sx={{ mb: 2, borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="form-content"
-            id="form-header"
-            sx={{ backgroundColor: 'success.light', color: 'white', borderRadius: 3 }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: 600, flexGrow: 1 }}>
-              2. Revisar e Salvar Dados
-            </Typography>
-            <Tooltip title="Revise os metadados extraídos e salve o artigo">
-              <InfoIcon sx={{ color: 'white', mr: 2 }} />
-            </Tooltip>
-          </AccordionSummary>
-          <AccordionDetails sx={{ p: { xs: 2, md: 3 } }}>
-            {error && (
-              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                {error}
-              </Alert>
-            )}
-            {success && (
-              <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>
-                {success}
-              </Alert>
-            )}
-            <Grid container spacing={2}>
-              {Object.keys(formData).map((key) => (
-                <Grid
-                  item
-                  xs={12}
-                  sm={
-                    key === "Titulo" || key === "Autor(es)" || key === "Resumo"
-                      ? 12
-                      : 6
-                  }
-                  md={
-                    key === "Titulo" || key === "Autor(es)" || key === "Resumo"
-                      ? 12
-                      : 4
-                  }
-                  key={key}
-                >
-                  <TextField
-                    name={key}
-                    label={key}
-                    value={formData[key]}
-                    onChange={handleInputChange}
-                    fullWidth
+                    component="label"
                     variant="outlined"
-                    size="small"
-                    multiline={key === "Resumo" || key === "Titulo"}
-                    rows={key === "Resumo" ? 3 : 1}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-            <Divider sx={{ my: 3 }} />
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
-              <Button
-                variant="contained"
-                color="primary"
-                size="large"
-                onClick={handleSave}
-                disabled={loading || !formData.Titulo}
-                startIcon={
-                  loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />
-                }
-                sx={{ borderRadius: 2, px: 8, py: 1.5, fontWeight: "bold" }}
-              >
-                {loading ? "Salvando..." : "Salvar Artigo na Planilha"}
-              </Button>
-            </Box>
-          </AccordionDetails>
-        </Accordion>
+                    startIcon={<CloudUploadIcon />}
+                    fullWidth
+                    sx={{ py: 1.5, borderRadius: 3, borderStyle: 'dashed' }}
+                  >
+                    Selecionar PDF
+                    <input type="file" hidden onChange={handleFileChange} accept="application/pdf" />
+                  </Button>
+                  {file && <Chip label={file.name} onDelete={() => setFile(null)} color="primary" sx={{ mt: 1, width: '100%' }} />}
+                </Box>
 
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  fullWidth
+                  onClick={handleExtract}
+                  disabled={loading || (!searchTitle && !file)}
+                  sx={{ py: 1.5, borderRadius: 3, fontWeight: 800 }}
+                >
+                  {loading ? <CircularProgress size={24} color="inherit" /> : "Extrair com IA"}
+                </Button>
+              </Stack>
+            </Paper>
+          </Grid>
+
+          {/* Step 2: Form */}
+          <Grid item xs={12} md={8}>
+            <Paper sx={{ p: 4, borderRadius: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>
+                2. Metadados do Artigo
+              </Typography>
+              
+              {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>}
+              {success && <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>{success}</Alert>}
+
+              <Grid container spacing={2}>
+                {Object.keys(formData).map((key) => {
+                  if (key === "pub_url") return null;
+                  const isLarge = ["Titulo", "Autor(es)", "Resumo", "Palavras-chave"].includes(key);
+                  return (
+                    <Grid item xs={12} sm={isLarge ? 12 : 6} key={key}>
+                      <TextField
+                        name={key}
+                        label={key}
+                        value={formData[key]}
+                        onChange={handleInputChange}
+                        fullWidth
+                        size="small"
+                        multiline={key === "Resumo" || key === "Titulo"}
+                        rows={key === "Resumo" ? 4 : 1}
+                      />
+                    </Grid>
+                  );
+                })}
+              </Grid>
+
+              <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'center' }}>
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={handleSave}
+                  disabled={loading || !formData.Titulo}
+                  startIcon={<SaveIcon />}
+                  sx={{ py: 2, px: 10, borderRadius: '50px', fontWeight: 900 }}
+                >
+                  {loading ? "Processando..." : "Salvar na Base"}
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
+        </Grid>
       </Container>
     </Box>
   );

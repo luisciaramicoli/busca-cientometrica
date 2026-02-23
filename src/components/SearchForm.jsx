@@ -19,12 +19,18 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
+  Stack,
+  InputAdornment,
+  Avatar,
+  Fade
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HistoryIcon from '@mui/icons-material/History';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import SortIcon from '@mui/icons-material/Sort';
 
 const SearchForm = ({ onSearch, loading }) => {
   const [searchTerms, setSearchTerms] = useState('');
@@ -43,7 +49,6 @@ const SearchForm = ({ onSearch, loading }) => {
   const saveToHistory = (params) => {
     const newHistory = [params, ...searchHistory.filter(h => h.search_terms !== params.search_terms)].slice(0, 5);
     setSearchHistory(newHistory);
-    localStorage.setItem('searchHistory', JSON.stringify(newHistory));
   };
 
   const handleSubmit = (e) => {
@@ -73,172 +78,197 @@ const SearchForm = ({ onSearch, loading }) => {
 
   return (
     <Box>
-      <Paper
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{
-          p: { xs: 2, md: 3 },
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 2,
-          mb: 3
-        }}
-        elevation={0}
-      >
-        <Typography variant="h6" gutterBottom sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <SearchIcon /> Parâmetros de Busca
-        </Typography>
-        
-        <Grid container spacing={2} alignItems="flex-start">
-          <Grid item xs={12}>
-            <TextField
-              label="Termos de Busca (OpenAlex)"
-              placeholder="Ex: 'climate change' AND ('adaptation' OR 'mitigation')"
-              variant="outlined"
-              fullWidth
-              multiline
-              rows={2}
-              value={searchTerms}
-              onChange={(e) => setSearchTerms(e.target.value)}
-              required
-              helperText="Use operadores booleanos para refinar sua pesquisa."
-            />
-          </Grid>
+      <Fade in timeout={500}>
+        <Paper
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{
+            p: { xs: 3, md: 4 },
+            borderRadius: 4,
+            mb: 4,
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', bgcolor: 'primary.main' }} />
           
-          <Grid item xs={6} sm={3}>
-            <TextField
-              label="Ano de Início"
-              variant="outlined"
-              type="number"
-              fullWidth
-              value={startYear}
-              onChange={(e) => setStartYear(e.target.value)}
-              required
-            />
-          </Grid>
-          <Grid item xs={6} sm={3}>
-            <TextField
-              label="Ano de Fim"
-              variant="outlined"
-              type="number"
-              fullWidth
-              value={endYear}
-              onChange={(e) => setEndYear(e.target.value)}
-              required
-            />
-          </Grid>
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 4 }}>
+            <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
+              <SearchIcon sx={{ fontSize: 20 }} />
+            </Avatar>
+            <Typography variant="h5" sx={{ fontWeight: 800 }}>
+              Configurar Pesquisa
+            </Typography>
+          </Stack>
           
-          <Grid item xs={12} sm={3}>
-             <FormControl fullWidth>
-                <InputLabel>Ordenação</InputLabel>
-                <Select
-                  value={sortOption}
-                  label="Ordenação"
-                  onChange={(e) => setSortOption(e.target.value)}
-                >
-                  <MenuItem value="relevance">Relevância</MenuItem>
-                  <MenuItem value="newest">Mais Recentes</MenuItem>
-                  <MenuItem value="cited">Mais Citados</MenuItem>
-                </Select>
-             </FormControl>
-          </Grid>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                label="Expressão de Busca (OpenAlex)"
+                placeholder="Ex: 'climate change' AND ('adaptation' OR 'mitigation')"
+                variant="outlined"
+                fullWidth
+                multiline
+                rows={2}
+                value={searchTerms}
+                onChange={(e) => setSearchTerms(e.target.value)}
+                required
+                InputProps={{
+                  sx: { borderRadius: 3 }
+                }}
+                helperText="Combine termos usando AND, OR, NOT e parênteses."
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                label="Ano Inicial"
+                type="number"
+                fullWidth
+                value={startYear}
+                onChange={(e) => setStartYear(e.target.value)}
+                required
+                InputProps={{
+                  startAdornment: <InputAdornment position="start"><CalendarTodayIcon fontSize="small" /></InputAdornment>,
+                  sx: { borderRadius: 3 }
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                label="Ano Final"
+                type="number"
+                fullWidth
+                value={endYear}
+                onChange={(e) => setEndYear(e.target.value)}
+                required
+                InputProps={{
+                  startAdornment: <InputAdornment position="start"><CalendarTodayIcon fontSize="small" /></InputAdornment>,
+                  sx: { borderRadius: 3 }
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+               <FormControl fullWidth>
+                  <InputLabel>Ordenar por</InputLabel>
+                  <Select
+                    value={sortOption}
+                    label="Ordenar por"
+                    onChange={(e) => setSortOption(e.target.value)}
+                    sx={{ borderRadius: 3 }}
+                    startAdornment={<InputAdornment position="start" sx={{ ml: 1, mr: -0.5 }}><SortIcon fontSize="small" /></InputAdornment>}
+                  >
+                    <MenuItem value="relevance">Relevância</MenuItem>
+                    <MenuItem value="newest">Mais Recentes</MenuItem>
+                    <MenuItem value="cited">Mais Citados</MenuItem>
+                  </Select>
+               </FormControl>
+            </Grid>
 
-          <Grid item xs={12} sm={3} sx={{ display: 'flex', alignItems: 'center' }}>
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              fullWidth
-              loading={loading}
-              loadingPosition="start"
-              startIcon={<SearchIcon />}
-              sx={{ height: '56px' }}
-            >
-              BUSCAR
-            </Button>
-          </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                fullWidth
+                disabled={loading}
+                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+                sx={{ height: '56px', borderRadius: 3, fontWeight: 800, fontSize: '1.1rem' }}
+              >
+                {loading ? 'BUSCANDO...' : 'EXECUTAR'}
+              </Button>
+            </Grid>
 
-          <Grid item xs={12}>
-             <Typography variant="caption" sx={{ mr: 1, fontWeight: 'bold' }}>Atalhos de Data:</Typography>
-             <Chip label="Últimos 5 Anos" size="small" onClick={() => handleDateShortcut(5)} sx={{ mr: 1, cursor: 'pointer' }} />
-             <Chip label="Últimos 10 Anos" size="small" onClick={() => handleDateShortcut(10)} sx={{ mr: 1, cursor: 'pointer' }} />
-             <Chip label="Últimos 20 Anos" size="small" onClick={() => handleDateShortcut(20)} sx={{ cursor: 'pointer' }} />
+            <Grid item xs={12}>
+               <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, mr: 1 }}>INTERVALOS RÁPIDOS:</Typography>
+                 <Chip label="5 Anos" variant="outlined" size="small" onClick={() => handleDateShortcut(5)} sx={{ borderRadius: 1.5, fontWeight: 600 }} />
+                 <Chip label="10 Anos" variant="outlined" size="small" onClick={() => handleDateShortcut(10)} sx={{ borderRadius: 1.5, fontWeight: 600 }} />
+                 <Chip label="20 Anos" variant="outlined" size="small" onClick={() => handleDateShortcut(20)} sx={{ borderRadius: 1.5, fontWeight: 600 }} />
+               </Stack>
+            </Grid>
           </Grid>
+        </Paper>
+      </Fade>
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={7}>
+          <Accordion sx={{ borderRadius: 4, '&:before': { display: 'none' }, boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <LightbulbIcon color="primary" fontSize="small" />
+                <Typography sx={{ fontWeight: 700 }}>Dicas de Pesquisa e Operadores</Typography>
+              </Stack>
+            </AccordionSummary>
+            <AccordionDetails sx={{ px: 3, pb: 3 }}>
+              <Grid container spacing={3}>
+                 <Grid item xs={12}>
+                     <Typography variant="body2" color="text.secondary" paragraph>
+                        A plataforma utiliza a API do OpenAlex. Use operadores lógicos para criar filtros complexos.
+                     </Typography>
+                 </Grid>
+                 <Grid item xs={6}>
+                    <Typography variant="caption" sx={{ fontWeight: 900, display: 'block', mb: 1, color: 'primary.main' }}>OPERADORES</Typography>
+                    <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                      • <b>AND</b>: resultados com ambos os termos.<br/>
+                      • <b>OR</b>: resultados com pelo menos um termo.<br/>
+                      • <b>NOT</b>: exclui termos específicos.
+                    </Typography>
+                 </Grid>
+                 <Grid item xs={6}>
+                    <Typography variant="caption" sx={{ fontWeight: 900, display: 'block', mb: 1, color: 'primary.main' }}>EXEMPLO</Typography>
+                    <Typography variant="body2" sx={{ fontStyle: 'italic', fontSize: '0.8rem', bgcolor: 'grey.50', p: 1, borderRadius: 1 }}>
+                      "bioinsumos" AND ("citros" OR "citricultura")
+                    </Typography>
+                 </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
         </Grid>
-      </Paper>
 
-      {/* Accordion de Dicas */}
-      <Accordion sx={{ mb: 3, border: '1px solid #e0e0e0', boxShadow: 'none' }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 'bold', color: 'primary.main' }}>
-            <LightbulbIcon fontSize="small" />
-            Dicas de Pesquisa e Exemplos (Prompts)
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ bgcolor: '#f9f9f9' }}>
-          <Grid container spacing={2}>
-             <Grid item xs={12} md={6}>
-                 <Typography variant="subtitle2" gutterBottom fontWeight="bold">Operadores Booleanos:</Typography>
-                 <Typography variant="body2" paragraph>
-                    • <b>AND</b>: Retorna resultados contendo AMBOS os termos.<br/>
-                    <i>Ex: "machine learning" AND "cancer"</i>
-                 </Typography>
-                 <Typography variant="body2" paragraph>
-                    • <b>OR</b>: Retorna resultados contendo PELO MENOS UM dos termos.<br/>
-                    <i>Ex: "neoplasm" OR "tumor" OR "cancer"</i>
-                 </Typography>
-                 <Typography variant="body2" paragraph>
-                    • <b>NOT</b>: Exclui resultados contendo o termo.<br/>
-                    <i>Ex: "virus" NOT "computer"</i>
-                 </Typography>
-             </Grid>
-             <Grid item xs={12} md={6}>
-                 <Typography variant="subtitle2" gutterBottom fontWeight="bold">Exemplos Avançados:</Typography>
-                 <Typography variant="body2" sx={{ fontFamily: 'monospace', bgcolor: '#fff', p: 1, border: '1px solid #ddd', borderRadius: 1, mb: 1 }}>
-                    ("climate change" OR "global warming") AND ("adaptation" OR "mitigation")
-                 </Typography>
-                 <Typography variant="caption" display="block" sx={{ mb: 2 }}>
-                    Busca ampla sobre mudanças climáticas e estratégias de resposta.
-                 </Typography>
-
-                 <Typography variant="body2" sx={{ fontFamily: 'monospace', bgcolor: '#fff', p: 1, border: '1px solid #ddd', borderRadius: 1, mb: 1 }}>
-                    "artificial intelligence" AND "education" AND year:2023
-                 </Typography>
-                 <Typography variant="caption" display="block">
-                    Foca especificamente em AI na educação publicada em 2023.
-                 </Typography>
-             </Grid>
-          </Grid>
-        </AccordionDetails>
-      </Accordion>
-
-      {/* Histórico de Busca */}
-      {searchHistory.length > 0 && (
-          <Paper sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 2 }} elevation={0}>
-              <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <HistoryIcon fontSize="small" color="action" />
-                  Histórico Recente
-              </Typography>
-              <List dense>
-                  {searchHistory.map((item, index) => (
-                      <div key={index}>
-                          <ListItem button onClick={() => restoreHistory(item)}>
-                              <ListItemIcon>
-                                  <SearchIcon fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText 
-                                  primary={item.search_terms} 
-                                  secondary={`${item.start_year} - ${item.end_year} • ${item.sort_option === 'relevance' ? 'Relevância' : item.sort_option === 'newest' ? 'Mais Recentes' : 'Mais Citados'}`} 
-                              />
-                          </ListItem>
-                          {index < searchHistory.length - 1 && <Divider />}
-                      </div>
-                  ))}
+        <Grid item xs={12} md={5}>
+          {searchHistory.length > 0 && (
+            <Paper sx={{ p: 2.5, borderRadius: 4 }} elevation={0}>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+                <HistoryIcon color="action" fontSize="small" />
+                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Histórico Recente</Typography>
+              </Stack>
+              <List dense disablePadding>
+                {searchHistory.map((item, index) => (
+                  <Fade in timeout={300 + (index * 100)} key={index}>
+                    <Box>
+                      <ListItem 
+                        button 
+                        onClick={() => restoreHistory(item)}
+                        sx={{ borderRadius: 2, py: 1 }}
+                      >
+                        <ListItemText 
+                          primary={item.search_terms} 
+                          primaryTypographyProps={{ fontWeight: 600, noWrap: true, fontSize: '0.85rem' }}
+                          secondary={`${item.start_year}-${item.end_year} • ${item.sort_option === 'relevance' ? 'Relevância' : 'Data'}`}
+                          secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                        />
+                      </ListItem>
+                      {index < searchHistory.length - 1 && <Divider sx={{ my: 0.5, opacity: 0.5 }} />}
+                    </Box>
+                  </Fade>
+                ))}
               </List>
-          </Paper>
-      )}
+            </Paper>
+          )}
+        </Grid>
+      </Grid>
     </Box>
   );
 };
+
+const CircularProgress = ({ size, color }) => (
+  <Box component="span" sx={{ display: 'inline-flex', mr: 1 }}>
+    <svg width={size} height={size} viewBox="22 22 44 44">
+      <circle cx="44" cy="44" r="20.2" fill="none" stroke="currentColor" strokeWidth="3.6" />
+    </svg>
+  </Box>
+);
 
 export default SearchForm;

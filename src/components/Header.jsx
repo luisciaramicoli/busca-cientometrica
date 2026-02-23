@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   AppBar, 
   Toolbar, 
@@ -9,11 +9,14 @@ import {
   List, 
   ListItem, 
   ListItemText, 
+  ListItemIcon,
   Box,
   useTheme,
   useMediaQuery,
   Divider,
-  Container
+  Container,
+  Avatar,
+  Tooltip
 } from '@mui/material';
 import { useAuth } from '../hooks/useAuth';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -23,14 +26,26 @@ import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 import ArticleIcon from '@mui/icons-material/Article';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import GroupIcon from '@mui/icons-material/Group';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 
 const Header = () => {
-  const { isAuthenticated, logout, userRole } = useAuth();
+  const { isAuthenticated, logout, userRole, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -43,44 +58,102 @@ const Header = () => {
   };
 
   const menuItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/home', show: isAuthenticated },
     { text: 'Busca', icon: <SearchIcon />, path: '/search', show: isAuthenticated },
     { text: 'Inserção Manual', icon: <PlaylistAddIcon />, path: '/manual-insert', show: isAuthenticated },
     { text: 'Curadoria', icon: <ArticleIcon />, path: '/curation', show: isAuthenticated },
-    { text: 'Cadastrar Usuário', icon: <PersonAddIcon />, path: '/register-user', show: isAuthenticated && userRole === 'admin' },
-    { text: 'Gerenciar Usuários', icon: <PersonAddIcon />, path: '/user-management', show: isAuthenticated && userRole === 'admin' },
+    { text: 'Usuários', icon: <GroupIcon />, path: '/user-management', show: isAuthenticated && userRole === 'admin' },
   ];
 
   const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ width: 250 }}>
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <ScienceIcon color="primary" />
-        <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
-          Cientometria
-        </Typography>
+    <Box sx={{ width: 280, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2, bgcolor: 'primary.main', color: 'white' }}>
+        <Avatar sx={{ bgcolor: 'secondary.main' }}>
+          <ScienceIcon />
+        </Avatar>
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+            Cientometria
+          </Typography>
+          <Typography variant="caption" sx={{ opacity: 0.8 }}>
+            Plataforma Acadêmica
+          </Typography>
+        </Box>
       </Box>
-      <Divider />
-      <List>
-        <ListItem component={RouterLink} to="/">
-          <ListItemText primary="Home" />
-        </ListItem>
-        {menuItems.filter(item => item.show).map((item) => (
-          <ListItem key={item.text} component={RouterLink} to={item.path}>
-            <ListItemText primary={item.text} />
+      
+      <Box sx={{ p: 2, flexGrow: 1 }}>
+        <Typography variant="overline" sx={{ px: 2, color: 'text.secondary', fontWeight: 700 }}>
+          Menu Principal
+        </Typography>
+        <List sx={{ mt: 1 }}>
+          <ListItem 
+            component={RouterLink} 
+            to="/" 
+            onClick={handleDrawerToggle}
+            sx={{ 
+              borderRadius: 2, 
+              mb: 0.5,
+              bgcolor: location.pathname === '/' ? 'primary.light' : 'transparent',
+              color: location.pathname === '/' ? 'white' : 'text.primary',
+              '&:hover': { bgcolor: location.pathname === '/' ? 'primary.light' : 'rgba(0,0,0,0.04)' }
+            }}
+          >
+            <ListItemIcon sx={{ color: location.pathname === '/' ? 'white' : 'primary.main', minWidth: 40 }}>
+              <DashboardIcon size="small" />
+            </ListItemIcon>
+            <ListItemText primary="Home" primaryTypographyProps={{ fontWeight: 600 }} />
           </ListItem>
-        ))}
-      </List>
+          
+          {menuItems.filter(item => item.show).map((item) => (
+            <ListItem 
+              key={item.text} 
+              component={RouterLink} 
+              to={item.path}
+              onClick={handleDrawerToggle}
+              sx={{ 
+                borderRadius: 2, 
+                mb: 0.5,
+                bgcolor: location.pathname === item.path ? 'primary.light' : 'transparent',
+                color: location.pathname === item.path ? 'white' : 'text.primary',
+                '&:hover': { bgcolor: location.pathname === item.path ? 'primary.light' : 'rgba(0,0,0,0.04)' }
+              }}
+            >
+              <ListItemIcon sx={{ color: location.pathname === item.path ? 'white' : 'primary.main', minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} primaryTypographyProps={{ fontWeight: 600 }} />
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+
       <Divider />
-      <List>
+      
+      <Box sx={{ p: 2 }}>
         {!isAuthenticated ? (
-          <ListItem component={RouterLink} to="/login">
-            <ListItemText primary="Login" />
-          </ListItem>
+          <Button 
+            fullWidth 
+            variant="contained" 
+            component={RouterLink} 
+            to="/login"
+            onClick={handleDrawerToggle}
+            sx={{ borderRadius: 2 }}
+          >
+            Entrar
+          </Button>
         ) : (
-          <ListItem onClick={handleLogout}>
-            <ListItemText primary="Sair" />
-          </ListItem>
+          <Button 
+            fullWidth 
+            variant="outlined" 
+            color="error" 
+            startIcon={<LogoutIcon />} 
+            onClick={handleLogout}
+            sx={{ borderRadius: 2 }}
+          >
+            Sair
+          </Button>
         )}
-      </List>
+      </Box>
     </Box>
   );
 
@@ -88,68 +161,113 @@ const Header = () => {
     <>
       <AppBar 
         position="sticky" 
-        elevation={0} 
+        elevation={scrolled ? 4 : 0} 
         sx={{ 
-          borderBottom: '1px solid', 
-          borderColor: 'divider', 
-          backdropFilter: 'blur(8px)',
-          bgcolor: 'rgba(255, 255, 255, 0.9)', 
-          color: 'text.primary',
-          zIndex: (theme) => theme.zIndex.drawer + 1
+          transition: 'all 0.3s ease',
+          bgcolor: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'white',
+          backdropFilter: scrolled ? 'blur(10px)' : 'none',
+          borderBottom: scrolled ? 'none' : '1px solid',
+          borderColor: 'divider',
         }}
       >
         <Container maxWidth="lg">
-          <Toolbar disableGutters>
-            <IconButton
-              edge="start"
-              color="primary"
-              aria-label="home"
-              component={RouterLink}
-              to="/"
-              sx={{ mr: 1 }}
-            >
-              <ScienceIcon />
-            </IconButton>
-            <Typography 
-              variant="h6" 
+          <Toolbar disableGutters sx={{ height: { xs: 64, md: 80 } }}>
+            <Box 
               component={RouterLink} 
               to="/" 
               sx={{ 
-                flexGrow: 1, 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1.5, 
                 textDecoration: 'none', 
-                color: 'inherit', 
-                fontWeight: 700,
-                letterSpacing: '-0.5px'
+                color: 'primary.main',
+                transition: 'transform 0.2s',
+                '&:hover': { transform: 'scale(1.02)' }
               }}
             >
-              Busca Cientométrica
-            </Typography>
+              <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40, boxShadow: '0 4px 8px rgba(27, 94, 32, 0.2)' }}>
+                <ScienceIcon />
+              </Avatar>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 800,
+                  fontSize: { xs: '1.1rem', md: '1.3rem' },
+                  letterSpacing: '-0.5px',
+                  display: { xs: 'none', sm: 'block' }
+                }}
+              >
+                Busca Cientométrica
+              </Typography>
+            </Box>
+            
+            <Box sx={{ flexGrow: 1 }} />
             
             {isMobile ? (
               <IconButton
-                color="inherit"
+                color="primary"
                 aria-label="open drawer"
-                edge="start"
                 onClick={handleDrawerToggle}
+                sx={{ bgcolor: 'rgba(27, 94, 32, 0.05)' }}
               >
                 <MenuIcon />
               </IconButton>
             ) : (
-              <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {menuItems.filter(item => item.show).map((item) => (
-                  <Button key={item.text} color="inherit" component={RouterLink} to={item.path} sx={{ fontWeight: 500 }}>
+                  <Button 
+                    key={item.text} 
+                    component={RouterLink} 
+                    to={item.path}
+                    sx={{ 
+                      px: 2,
+                      fontWeight: 600,
+                      color: location.pathname === item.path ? 'primary.main' : 'text.secondary',
+                      position: 'relative',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: 4,
+                        left: 16,
+                        right: 16,
+                        height: 2,
+                        bgcolor: 'primary.main',
+                        transform: location.pathname === item.path ? 'scaleX(1)' : 'scaleX(0)',
+                        transition: 'transform 0.3s'
+                      },
+                      '&:hover': { 
+                        color: 'primary.main',
+                        bgcolor: 'rgba(27, 94, 32, 0.04)' 
+                      }
+                    }}
+                  >
                     {item.text}
                   </Button>
                 ))}
-                {!isAuthenticated ? (
-                  <Button variant="contained" component={RouterLink} to="/login" sx={{ ml: 2, borderRadius: 2 }}>
-                    Login
-                  </Button>
-                ) : (
-                  <Button color="error" startIcon={<LogoutIcon />} onClick={handleLogout} sx={{ ml: 2 }}>
-                    Sair
-                  </Button>
-                )}
+                
+                <Box sx={{ ml: 2, pl: 2, borderLeft: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {!isAuthenticated ? (
+                    <Button 
+                      variant="contained" 
+                      component={RouterLink} 
+                      to="/login" 
+                      sx={{ borderRadius: '50px', px: 3 }}
+                    >
+                      Login
+                    </Button>
+                  ) : (
+                    <>
+                      <Tooltip title={`Perfil: ${userRole}`}>
+                        <Avatar sx={{ width: 35, height: 35, bgcolor: 'secondary.main', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                          {user?.username?.substring(0, 1).toUpperCase() || 'U'}
+                        </Avatar>
+                      </Tooltip>
+                      <IconButton color="error" onClick={handleLogout} sx={{ bgcolor: 'rgba(211, 47, 47, 0.05)' }}>
+                        <LogoutIcon fontSize="small" />
+                      </IconButton>
+                    </>
+                  )}
+                </Box>
               </Box>
             )}
           </Toolbar>
@@ -161,9 +279,8 @@ const Header = () => {
         anchor="right"
         open={mobileOpen}
         onClose={handleDrawerToggle}
-        ModalProps={{
-          keepMounted: true, // Better open performance on mobile.
-        }}
+        PaperProps={{ sx: { borderTopLeftRadius: 20, borderBottomLeftRadius: 20 } }}
+        ModalProps={{ keepMounted: true }}
       >
         {drawer}
       </Drawer>
