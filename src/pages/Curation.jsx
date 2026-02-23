@@ -381,8 +381,8 @@ function CurationPage() {
     // Se a URL não for completa (começar com http), assume que é um arquivo local servido pelo backend
     let finalUrl = url;
     if (!url.startsWith("http")) {
-      // VITE_API_BASE_URL is usually something like http://localhost:5001/api
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
+      // VITE_API_BASE_URL is usually something like http://172.26.0.3:5001/api
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://172.26.0.3:5001/api";
       const serverUrl = apiBaseUrl.replace(/\/api\/?$/, ""); // Remove /api at the end
       finalUrl = `${serverUrl}/documents/${url}`;
     } else if (url.includes("drive.google.com/file/d/")) {
