@@ -30,7 +30,7 @@ import {
   manualInsertArticle,
   extractMetadata,
   checkApiHealth,
-  processDriveFolder,
+  processLocalFolder,
 } from "../api";
 
 const ManualInsertPage = () => {
@@ -69,7 +69,7 @@ const ManualInsertPage = () => {
   const [success, setSuccess] = useState("");
 
   // State for batch processing
-  const [folderId, setFolderId] = useState("");
+  const [folderPath, setFolderPath] = useState("");
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchError, setBatchError] = useState("");
   const [batchSuccess, setBatchSuccess] = useState("");
@@ -218,8 +218,8 @@ const ManualInsertPage = () => {
   };
 
   const handleBatchProcess = async () => {
-    if (!folderId) {
-      setBatchError("Por favor, insira o ID da Pasta do Google Drive.");
+    if (!folderPath) {
+      setBatchError("Por favor, insira o caminho da Pasta Local.");
       return;
     }
 
@@ -228,12 +228,12 @@ const ManualInsertPage = () => {
     setBatchSuccess("");
 
     try {
-      const response = await processDriveFolder(folderId);
+      const response = await processLocalFolder(folderPath);
       setBatchSuccess(
         response.message ||
-          `Processamento em lote da pasta "${folderId}" iniciado com sucesso!`,
+          `Processamento em lote da pasta "${folderPath}" iniciado com sucesso!`,
       );
-      setFolderId(""); // Clear folder ID after initiating process
+      setFolderPath(""); // Clear folder path after initiating process
     } catch (err) {
       console.error("Batch processing failed:", err);
       const errorMessage =
@@ -353,13 +353,11 @@ const ManualInsertPage = () => {
             id="form-header"
             sx={{ backgroundColor: 'success.light', color: 'white', borderRadius: 3 }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, flexGrow: 1 }}>
               2. Revisar e Salvar Dados
             </Typography>
             <Tooltip title="Revise os metadados extraídos e salve o artigo">
-              <IconButton size="small" sx={{ color: 'white' }}>
-                <InfoIcon />
-              </IconButton>
+              <InfoIcon sx={{ color: 'white', mr: 2 }} />
             </Tooltip>
           </AccordionSummary>
           <AccordionDetails sx={{ p: { xs: 2, md: 3 } }}>

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://api-cientometria.vercel.app/api";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -85,10 +85,17 @@ export const manualInsertArticle = async (dataToSave, file) => {
   return response.data;
 };
 
-export const manualApproveArticle = async (rowNumber, fileId) => {
+export const manualApproveArticle = async (rowNumber, fileName) => {
   const response = await api.post("/manual-approval", {
     row_number: rowNumber,
-    fileId: fileId,
+    fileName: fileName,
+  });
+  return response.data;
+};
+
+export const processLocalFolder = async (folderPath) => {
+  const response = await api.post("/batch-process-local-folder", {
+    folder_path: folderPath,
   });
   return response.data;
 };
@@ -110,14 +117,25 @@ export const registerUser = async (username, email, password, role) => {
   return response.data;
 };
 
-export const processDriveFolder = async (folderId) => {
-  const response = await api.post("/batch-process-drive-folder", {
-    folder_id: folderId,
-  });
+export const checkApiHealth = async () => {
+  const response = await api.get("/health");
   return response.data;
 };
 
-export const checkApiHealth = async () => {
-  const response = await api.get("/health");
+export const getUsers = async () => {
+  const response = await api.get("/users");
+  return response.data;
+};
+
+export const deleteUser = async (id) => {
+  const response = await api.delete(`/users/${id}`);
+  return response.data;
+};
+
+export const updateUserPermissions = async (id, role, allowed_categories) => {
+  const response = await api.put(`/users/${id}/permissions`, {
+    role,
+    allowed_categories,
+  });
   return response.data;
 };

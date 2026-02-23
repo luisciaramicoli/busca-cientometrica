@@ -1,15 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { 
-  Box, 
-  Button, 
-  Typography, 
-  Container, 
-  Grid, 
-  Paper, 
-  Card, 
-  CardContent, 
-  CardActionArea 
+import {
+  Box,
+  Button,
+  Typography,
+  Container,
+  Grid,
+  Paper,
+  Card,
+  CardContent,
+  CardActionArea,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -24,15 +24,15 @@ import { checkApiHealth } from "../api";
 function HomePage() {
   const navigate = useNavigate();
   const { userRole } = useAuth();
-  const [apiStatus, setApiStatus] = useState('checking');
+  const [apiStatus, setApiStatus] = useState("checking");
 
   useEffect(() => {
     const checkHealth = async () => {
       try {
         await checkApiHealth();
-        setApiStatus('online');
+        setApiStatus("online");
       } catch (error) {
-        setApiStatus('offline');
+        setApiStatus("offline");
       }
     };
     checkHealth();
@@ -44,66 +44,123 @@ function HomePage() {
       description: "Pesquise artigos em múltiplas bases de dados.",
       icon: <SearchIcon sx={{ fontSize: 40 }} />,
       path: "/search",
-      color: "primary.main"
+      color: "primary.main",
     },
     {
       title: "Curadoria",
       description: "Gerencie e classifique seus artigos salvos.",
       icon: <ArticleIcon sx={{ fontSize: 40 }} />,
       path: "/curation",
-      color: "secondary.main"
+      color: "secondary.main",
     },
     {
       title: "Inserção Manual",
       description: "Adicione artigos manualmente ao sistema.",
       icon: <PlaylistAddIcon sx={{ fontSize: 40 }} />,
       path: "/manual-insert",
-      color: "success.main"
-    }
+      color: "success.main",
+    },
+    {
+      title: "Importação em Lote (Em desenvolvimento)",
+      description: "Processe múltiplos PDFs de uma pasta local.",
+      icon: <FolderIcon sx={{ fontSize: 40 }} />,
+      path: "/batch-process-drive",
+      color: "warning.main",
+    },
   ];
 
-  if (userRole === 'admin') {
+  if (userRole === "admin") {
     menuItems.push({
       title: "Cadastrar Usuário",
-      description: "Gerencie o acesso de novos pesquisadores.",
+      description: "Adicione novos pesquisadores ao sistema.",
       icon: <PersonAddIcon sx={{ fontSize: 40 }} />,
       path: "/register-user",
-      color: "info.main"
+      color: "info.main",
+    });
+    menuItems.push({
+      title: "Gestão de Usuários",
+      description: "Gerencie permissões, cargos e categorias.",
+      icon: <PersonAddIcon sx={{ fontSize: 40 }} />,
+      path: "/user-management",
+      color: "info.dark",
     });
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
       <Header />
       <Container maxWidth="lg" sx={{ mt: 8, mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 4 }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          sx={{ fontWeight: 700, mb: 4 }}
+        >
           Dashboard
         </Typography>
-        <Box sx={{ mb: 4, p: 3, bgcolor: 'white', borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <Box
+          sx={{
+            mb: 4,
+            p: 3,
+            bgcolor: "white",
+            borderRadius: 3,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        >
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
             Bem-vindo ao Sistema de Busca Cientométrica
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Gerencie suas pesquisas, curate artigos e insira dados manualmente. Status da API: 
-            <Typography component="span" sx={{ 
-              color: apiStatus === 'online' ? 'green' : apiStatus === 'offline' ? 'red' : 'orange',
-              fontWeight: 'bold'
-            }}>
-              {apiStatus === 'online' ? 'Online' : apiStatus === 'offline' ? 'Offline' : 'Verificando...'}
+            Gerencie suas pesquisas, curate artigos e insira dados manualmente.
+            Status da API:
+            <Typography
+              component="span"
+              sx={{
+                color:
+                  apiStatus === "online"
+                    ? "green"
+                    : apiStatus === "offline"
+                      ? "red"
+                      : "orange",
+                fontWeight: "bold",
+              }}
+            >
+              {apiStatus === "online"
+                ? "Online"
+                : apiStatus === "offline"
+                  ? "Offline"
+                  : "Verificando..."}
             </Typography>
           </Typography>
         </Box>
-        
+
         <Grid container spacing={3}>
           {menuItems.map((item, index) => (
             <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card sx={{ height: '100%', borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', transition: '0.3s', '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 8px 24px rgba(0,0,0,0.1)' } }}>
-                <CardActionArea onClick={() => navigate(item.path)} sx={{ height: '100%', p: 2 }}>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Box sx={{ color: item.color, mb: 2 }}>
-                      {item.icon}
-                    </Box>
-                    <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 600 }}>
+              <Card
+                sx={{
+                  height: "100%",
+                  borderRadius: 3,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                  transition: "0.3s",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+                  },
+                }}
+              >
+                <CardActionArea
+                  onClick={() => navigate(item.path)}
+                  sx={{ height: "100%", p: 2 }}
+                >
+                  <CardContent sx={{ textAlign: "center" }}>
+                    <Box sx={{ color: item.color, mb: 2 }}>{item.icon}</Box>
+                    <Typography
+                      variant="h6"
+                      component="h2"
+                      gutterBottom
+                      sx={{ fontWeight: 600 }}
+                    >
                       {item.title}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">

@@ -96,20 +96,21 @@ function CurationPage() {
   const [isTriggering, setIsTriggering] = useState(false);
   const [processingRow, setProcessingRow] = useState(null);
 
-  const getDriveIdFromUrl = (url) => (url.match(/[-\w]{25,}/) || [])[0];
-
   const fetchArticles = useCallback(async () => {
     setError("");
     try {
       const data = await getCuratedArticles();
       setArticles(data);
 
-      if (data.length > 0 && allHeaders.length === 0) {
-        // allHeaders is stable after first fetch
+      if (data.length > 0) {
+        // Use keys from the first article directly as headers if allHeaders is not set
         const originalHeaders = Object.keys(data[0]);
         const filteredHeaders = originalHeaders.filter(
           (h) =>
-            h !== "APROVAÇÃO CURADOR (marcar)" && h !== "ARTIGOS REJEITADOS",
+            h !== "APROVAÇÃO CURADOR (marcar)" && 
+            h !== "ARTIGOS REJEITADOS" && 
+            h !== "__row_number" &&
+            h !== "APROVAÇÃO MANUAL"
         );
         const newHeaders = ["Status", ...filteredHeaders];
         setAllHeaders(newHeaders);
@@ -128,7 +129,7 @@ function CurationPage() {
     } finally {
       setLoading(false);
     }
-  }, []); // Depend on allHeaders to ensure it's up-to-date when setting it
+  }, [allHeaders.length]);
 
   useEffect(() => {
     setLoading(true);
@@ -329,13 +330,12 @@ function CurationPage() {
 
   const handleManualApproval = async (article) => {
     const { __row_number } = article;
-    const fileUrl = article["URL DO DOCUMENTO"];
-    const fileId = getDriveIdFromUrl(fileUrl);
+    const fileName = article["URL DO DOCUMENTO"];
 
-    if (!fileId) {
+    if (!fileName) {
       setSnackbar({
         open: true,
-        message: "Este artigo não tem um arquivo no Drive para ser aprovado.",
+        message: "Este artigo não tem um arquivo local associado para ser aprovado.",
         severity: "warning",
       });
       return;
@@ -343,7 +343,7 @@ function CurationPage() {
 
     if (
       !window.confirm(
-        `Tem certeza que deseja aprovar manualmente o artigo "${article["Titulo"]}" (Linha ${__row_number})? Uma cópia do arquivo será enviada para a pasta de aprovados.`,
+        `Tem certeza que deseja aprovar manualmente o artigo "${article["Titulo"]}" (Linha ${__row_number})? Uma cópia do arquivo será enviada para a pasta de aprovados local.`,
       )
     ) {
       return;
@@ -356,7 +356,7 @@ function CurationPage() {
     });
 
     try {
-      await manualApproveArticle(__row_number, fileId);
+      await manualApproveArticle(__row_number, fileName);
       setSnackbar({
         open: true,
         message: "Artigo aprovado manualmente com sucesso!",
@@ -378,9 +378,14 @@ function CurationPage() {
   const handlePreviewPdf = (url) => {
     if (!url) return;
 
-    // Converte link de visualização do Google Drive para link de preview embedável
+    // Se a URL não for completa (começar com http), assume que é um arquivo local servido pelo backend
     let finalUrl = url;
-    if (url.includes("drive.google.com/file/d/")) {
+    if (!url.startsWith("http")) {
+      // VITE_API_BASE_URL is usually something like http://localhost:5001/api
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
+      const serverUrl = apiBaseUrl.replace(/\/api\/?$/, ""); // Remove /api at the end
+      finalUrl = `${serverUrl}/documents/${url}`;
+    } else if (url.includes("drive.google.com/file/d/")) {
       finalUrl = url.replace("/view", "/preview");
     }
 
@@ -411,6 +416,7 @@ function CurationPage() {
       (article["ARTIGOS REJEITADOS"] || "").toString().trim().toUpperCase() ===
       "TRUE";
     const urlDocumento = (article["URL DO DOCUMENTO"] || "").toString().trim();
+    const isLocalFile = urlDocumento !== "" && !urlDocumento.startsWith("http");
 
     if (isApprovedManual)
       return {
@@ -419,11 +425,11 @@ function CurationPage() {
         label: "Aprovado Manualmente",
         icon: <CheckCircleIcon />,
       };
-    if (urlDocumento === "")
+    if (!isLocalFile)
       return {
         status: "unavailable",
         color: "secondary",
-        label: "Indisponível",
+        label: "Indisponível (Sem arquivo local)",
         icon: <BlockIcon />,
       };
     if (isApprovedAI)
@@ -477,18 +483,7 @@ function CurationPage() {
 
         const matchesCategory = categoryFilter === "all" || article["CATEGORIA"] === categoryFilter;
 
-        // --- Role-based filtering ---
-        let matchesRole = true;
-        const categoriaValue = (article["CATEGORIA"] || "").toUpperCase(); // Assuming 'CATEGORIA' is the header for column AJ
-
-        if (userRole === "curadoria_bonetti") {
-          matchesRole = categoriaValue === "BONETTI";
-        } else if (userRole === "curadoria_boaretto") {
-          matchesRole = categoriaValue === "BOARETTO";
-        }
-        // For 'cientometria' and 'admin', matchesRole remains true, showing all.
-
-        return matchesStatus && matchesSearch && matchesCategory && matchesRole;
+        return matchesStatus && matchesSearch && matchesCategory;
       });
     }
 
@@ -830,19 +825,11 @@ function CurationPage() {
                         </Box>
                       )}
                       <CardContent
-                        sx={{ flexGrow: 1, pt: 0, overflowY: "auto" }}
+                        sx={{ flexGrow: 1, pt: 0, overflowY: "auto", maxHeight: 400 }}
                         className="curation-card-content"
                       >
                         {visibleHeaders.map((header) => {
-                          // Pula colunas de controle
-                          if (
-                            header === "Status" ||
-                            header === "Titulo" ||
-                            header === "__row_number"
-                          )
-                            return null;
-
-                          // Garante que não quebra se article[header] for undefined
+                          if (header === "Status" || header === "Titulo") return null;
                           const content =
                             article[header] !== undefined
                               ? String(article[header])
@@ -851,9 +838,9 @@ function CurationPage() {
                           return (
                             <Box key={header} sx={{ mb: 1.5 }} className="curation-card-field">
                               <Typography
-                                variant="body2"
+                                variant="caption"
                                 color="text.secondary"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ fontWeight: "bold", display: "block" }}
                                 className="curation-card-field-label"
                               >
                                 {header}:

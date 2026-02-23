@@ -14,16 +14,16 @@ import { Link as RouterLink } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FolderIcon from '@mui/icons-material/Folder';
 import Header from '../components/Header';
-import { processDriveFolder } from '../api';
+import { processLocalFolder } from '../api';
 
 function BatchProcessDrivePage() {
-  const [folderId, setFolderId] = useState('');
+  const [folderPath, setFolderPath] = useState('');
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const handleProcess = async () => {
-    if (!folderId.trim()) {
-      setSnackbar({ open: true, message: 'Digite o ID da pasta.', severity: 'error' });
+    if (!folderPath.trim()) {
+      setSnackbar({ open: true, message: 'Digite o caminho da pasta.', severity: 'error' });
       return;
     }
 
@@ -31,12 +31,12 @@ function BatchProcessDrivePage() {
     setSnackbar({ open: false, message: '', severity: 'success' });
 
     try {
-      const response = await processDriveFolder(folderId.trim());
-      setSnackbar({ open: true, message: 'Processamento em lote iniciado com sucesso!', severity: 'success' });
+      const response = await processLocalFolder(folderPath.trim());
+      setSnackbar({ open: true, message: response.message || 'Processamento em lote concluído!', severity: 'success' });
       console.log(response);
     } catch (error) {
-      console.error('Error processing drive folder:', error);
-      setSnackbar({ open: true, message: 'Erro ao processar pasta do Drive.', severity: 'error' });
+      console.error('Error processing local folder:', error);
+      setSnackbar({ open: true, message: 'Erro ao processar pasta local.', severity: 'error' });
     } finally {
       setLoading(false);
     }
@@ -55,26 +55,26 @@ function BatchProcessDrivePage() {
             Voltar
           </Button>
           <Typography variant="h4" component="h1">
-            Processamento em Lote do Google Drive
+            Processamento em Lote de Pasta Local
           </Typography>
         </Box>
 
         <Paper elevation={3} sx={{ p: 3 }}>
           <Typography variant="body1" gutterBottom>
-            Insira o ID da pasta do Google Drive para processar todos os arquivos em lote.
+            Insira o caminho da pasta local (relativo à raiz do projeto ou caminho absoluto) para processar todos os arquivos PDF em lote.
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
             <TextField
-              label="ID da Pasta"
-              value={folderId}
-              onChange={(e) => setFolderId(e.target.value)}
+              label="Caminho da Pasta"
+              value={folderPath}
+              onChange={(e) => setFolderPath(e.target.value)}
               fullWidth
-              placeholder="Ex: 1A2B3C4D5E6F7G8H9I0J"
+              placeholder="Ex: api-cientometria/temp_uploads"
             />
             <Button
               variant="contained"
               onClick={handleProcess}
-              disabled={loading || !folderId.trim()}
+              disabled={loading || !folderPath.trim()}
               startIcon={loading ? <CircularProgress size={20} /> : <FolderIcon />}
             >
               {loading ? 'Processando...' : 'Processar'}

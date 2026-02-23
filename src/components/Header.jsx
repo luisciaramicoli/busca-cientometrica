@@ -47,6 +47,7 @@ const Header = () => {
     { text: 'Inserção Manual', icon: <PlaylistAddIcon />, path: '/manual-insert', show: isAuthenticated },
     { text: 'Curadoria', icon: <ArticleIcon />, path: '/curation', show: isAuthenticated },
     { text: 'Cadastrar Usuário', icon: <PersonAddIcon />, path: '/register-user', show: isAuthenticated && userRole === 'admin' },
+    { text: 'Gerenciar Usuários', icon: <PersonAddIcon />, path: '/user-management', show: isAuthenticated && userRole === 'admin' },
   ];
 
   const drawer = (
