@@ -2,7 +2,17 @@ import { createContext, useState, useEffect, useCallback, useMemo } from 'react'
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
-export const AuthContext = createContext(null);
+// Create context with a default value to prevent null issues
+const defaultAuthValue = {
+    isAuthenticated: false,
+    token: null,
+    userRole: null,
+    isLoading: true,
+    login: () => {},
+    logout: () => {},
+};
+
+export const AuthContext = createContext(defaultAuthValue);
 
 export function AuthProvider({ children }) {
     const [userToken, setUserToken] = useState(() => {
@@ -74,11 +84,6 @@ export function AuthProvider({ children }) {
         login,
         logout,
     }), [userToken, userRole, isLoading, login, logout]);
-
-    if (isLoading) {
-        // Opcional: retornar um spinner ou nada para evitar flash de conteúdo deslogado
-        return null; 
-    }
 
     return (
         <AuthContext.Provider value={authValue}>
